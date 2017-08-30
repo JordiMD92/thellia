@@ -22,7 +22,11 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
-    def updateBoard(self,tile,row,col):
+    def isOnBoard(self,c,r):
+        """ Returns true if valid position or false otherwise """
+        return (c>=0) and (c<=7) and (r>=0) and (r<=7)
+
+    def updateBoard(self,tile,col,row):
         """
         Updates board with new movement if is a valid move
         @param int tile
@@ -38,7 +42,7 @@ class Board(object):
         """
         return False
 
-    def isValidMove(self,tile,row,col):
+    def isValidMove(self,tile,col,row):
         """
         Checks if it is a valid move
         @param int tile
@@ -53,4 +57,25 @@ class Board(object):
             list of tiles to flip if valid move
         """
         flipTiles = []
+        if self.board[col][row] != 0:
+            return flipTiles
+
+        for dirCol in ((-1),(0),(1)):
+            for dirRow in ((-1),(0),(1)):
+                if dirCol == dirRow and dirCol == 0:
+                    continue
+                c = dirCol + col
+                r = dirRow + row
+                while self.isOnBoard(c,r) and self.board[c][r] != 0:
+                    if self.board[c][r] == tile:
+                        while True:
+                            print("Hola "+str(c)+" "+str(r))
+                            c -= dirCol
+                            r -= dirRow
+                            if c == col and r == row:
+                                break
+                            flipTiles.append([c,r])
+                    if self.board[c][r] + tile == 0:
+                        c += dirCol
+                        r += dirRow
         return flipTiles
