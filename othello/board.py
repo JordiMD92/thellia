@@ -10,9 +10,12 @@ class Board(object):
         self.board[4][4] = Board.BLACK
         self.board[3][4] = Board.WHITE
         self.board[4][3] = Board.WHITE
+        self.board[2][4] = Board.WHITE
+        self.board[2][3] = Board.WHITE
+        self.board[3][2] = Board.BLACK
 
         self.remaining_pieces = 8*8-4
-        self.score = {Board.BLACK: 2, Board.WHITE: 2}
+        self.score = {Board.BLACK: 3, Board.WHITE: 4}
 
     def getScore(self):
         """ Returns actual score """
@@ -40,7 +43,17 @@ class Board(object):
             true if valid - update board
             false if invalid move - doesn't update board
         """
-        return False
+        moves = self.isValidMove(tile,col,row)
+        if moves:
+            self.board[col][row] = tile
+            for position in moves:
+                self.board[position[0]][position[1]] = tile
+            self.score[tile] += len(moves) + 1
+            self.score[-tile] -= len(moves)
+            self.remaining_pieces -= 1
+            return True
+        else:
+            return False
 
     def isValidMove(self,tile,col,row):
         """
@@ -69,7 +82,6 @@ class Board(object):
                 while self.isOnBoard(c,r) and self.board[c][r] != 0:
                     if self.board[c][r] == tile:
                         while True:
-                            print("Hola "+str(c)+" "+str(r))
                             c -= dirCol
                             r -= dirRow
                             if c == col and r == row:
