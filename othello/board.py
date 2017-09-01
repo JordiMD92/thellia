@@ -10,12 +10,9 @@ class Board(object):
         self.board[4][4] = Board.BLACK
         self.board[3][4] = Board.WHITE
         self.board[4][3] = Board.WHITE
-        self.board[2][4] = Board.WHITE
-        self.board[2][3] = Board.WHITE
-        self.board[3][2] = Board.BLACK
 
         self.remaining_pieces = 8*8-4
-        self.score = {Board.BLACK: 3, Board.WHITE: 4}
+        self.score = {Board.BLACK: 2, Board.WHITE: 2}
 
     def getScore(self):
         """ Returns actual score """
@@ -28,6 +25,10 @@ class Board(object):
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=7) and (r>=0) and (r<=7)
+
+    def getRemainingPieces(self):
+        """ Returns remaining pieces """
+        return self.remaining_pieces
 
     def updateBoard(self,tile,col,row):
         """

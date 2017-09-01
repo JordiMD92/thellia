@@ -1,34 +1,20 @@
 #!/usr/bin/env python
-from othello.board import Board
-from collections import defaultdict
+from othello.game import Game
+from othello.player import Player
+from views.consoleview import ConsoleView
 
+#Use a view and board
+view = ConsoleView()
+game = Game()
 
-class ConsoleView:
-    def printBoard(self,board):
-        print("   A   B   C   D   E   F   E   F  ")
-        print(" - - - - - - - - - - - - - - - - -")
-        for r in range(0,8,1):
-            row = ""
-            for c in range(0,8,1):
-                value = "|   "
-                if board[c][r] == -1: value = "| X "
-                if board[c][r] == 1: value = "| O "
-                row = row+value
-            print(str(r+1)+row+"|")
-            print(" - - - - - - - - - - - - - - - - -")
+#Human vs Human
+game.addPlayer(Player(1))
+game.addPlayer(Player(-1))
 
-    def printScore(self,score):
-        print("White score = "+str(score[b.WHITE]))
-        print("Black score = "+str(score[b.BLACK]))
+#Human vs Computer, ask tile and create players
+#playerTile = view.initMsg()
+#game.addPlayer(Player(playerTile))
+#game.addPlayer(Player(-playerTile))
 
-
-b = Board();
-cv = ConsoleView()
-
-cv.printScore(b.getScore())
-cv.printBoard(b.getBoard())
-
-print "\n"
-b.updateBoard(b.BLACK,1,4)
-cv.printScore(b.getScore())
-cv.printBoard(b.getBoard())
+#Run game
+game.run(view)
