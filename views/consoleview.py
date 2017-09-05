@@ -1,6 +1,19 @@
 class ConsoleView:
-    def initMsg(self):
+
+    def getGameMode(self,game):
         print("Welcome to Thellia")
+        print("Choose a game mode:")
+        print(str(game.GameMode['hvh'])+") Human vs Human")
+        print(str(game.GameMode['hvr'])+") Human vs Random Computer")
+        print(str(game.GameMode['rvr'])+") Random Computer vs Random Computer")
+        while True:
+            gameMode = int(input("Please choose: "))
+            if gameMode >= 1 and gameMode <= len(game.GameMode):
+                return gameMode
+            else:
+                print("Invalid option, try again")
+
+    def getHumanTile(self):
         print("Pick a tile color, Black moves first")
         print("1) Black \n2) White")
         while True:
@@ -10,19 +23,18 @@ class ConsoleView:
             else:
                 print("Invalid option, try again")
 
-    def askMove(self,player,board):
+    def askMove(self,posibleMoves):
         """ Ask what move the player will do """
         print("Where will you move?")
-        if player.checkMoves(board):
-            while True:
-                move = raw_input("Type Colum and Row 'CR' Ex:a1 for first column/row: ")
-                if len(move) == 2:
-                    c = ord(move[0])-97
-                    r = int(move[1])-1
-                    if int(c) in xrange(0,8) and int(r) in xrange(0,8):
+        while True:
+            move = raw_input("Type Colum and Row 'CR' Ex:a1 for first column/row: ")
+            if len(move) == 2:
+                c = ord(move[0])-97
+                r = int(move[1])-1
+                for col,row in posibleMoves:
+                    if c == col and r == row:
                         return c,r
-                    else:
-                        print("Invalid move, try again")
+                print("Invalid move, try again")
         return
 
     def printBoard(self,board):
@@ -59,3 +71,7 @@ class ConsoleView:
     def printInvalidMove(self):
         """ Print invalid move """
         print "Invalid move! Try again"
+
+    def printCannotMove(self):
+        """ Print can't move """
+        print "Can't move! :("

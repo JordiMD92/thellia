@@ -40,9 +40,6 @@ class Board(object):
             0-7 row position
         @param int col
             0-7 column position
-        @return bool
-            true if valid - update board
-            false if invalid move - doesn't update board
         """
         moves = self.isValidMove(tile,col,row)
         if moves:
