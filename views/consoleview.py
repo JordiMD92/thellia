@@ -75,3 +75,7 @@ class ConsoleView:
     def printCannotMove(self):
         """ Print can't move """
         print "Can't move! :("
+
+    def printEndGame(self):
+        """ Print end game """
+        print "Game ended, thanks for playing! :)"

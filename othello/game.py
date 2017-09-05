@@ -39,6 +39,6 @@ class Game():
                 view.printCannotMove()
                 passCount += 1
             actualTurnPlayer = white if actualTurnPlayer is black else black
-        print "FINAL"
         #Print final Board and score
         view.printState(self.board)
+        view.printEndGame()
