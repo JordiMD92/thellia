@@ -22,6 +22,10 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
+    def get1DBoard(self):
+        """ Returns actual state of board in 1 Dimension"""
+        return self.board.reshape((64))
+
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=7) and (r>=0) and (r<=7)

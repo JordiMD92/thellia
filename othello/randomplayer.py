@@ -6,5 +6,10 @@ class RandomPlayer(Player):
     def __init__(self,tile):
         Player.__init__(self,tile)
 
-    def getMove(self,posibleMoves):
-        return random.choice(posibleMoves)
+    def getMove(self,board):
+        r = c = -1
+        #Check posible moves
+        posibleMoves = self.checkMoves(board)
+        if posibleMoves:
+            c,r = random.choice(posibleMoves)
+        return c,r

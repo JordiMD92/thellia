@@ -6,6 +6,7 @@ class ConsoleView:
         print(str(game.GameMode['hvh'])+") Human vs Human")
         print(str(game.GameMode['hvr'])+") Human vs Random Computer")
         print(str(game.GameMode['rvr'])+") Random Computer vs Random Computer")
+        print(str(game.GameMode['train'])+") Train DQN Computer")
         while True:
             gameMode = int(input("Please choose: "))
             if gameMode >= 1 and gameMode <= len(game.GameMode):

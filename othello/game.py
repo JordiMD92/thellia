@@ -1,7 +1,7 @@
 import board
 
 class Game():
-    GameMode = {'hvh': 1, 'hvr': 2, 'rvr': 3}
+    GameMode = {'hvh': 1, 'hvr': 2, 'rvr': 3, 'train':4}
 
     def __init__(self):
         self.players = []
@@ -29,12 +29,10 @@ class Game():
             #Print actual board, score and turn
             view.printState(self.board)
             view.printTurn(self.board,actualTurnPlayer.getTile())
-            #Check posible moves, update board if possible otherwise pass
-            posibleMoves = actualTurnPlayer.checkMoves(self.board)
-            if posibleMoves:
-                passCount = 0
-                c,r = actualTurnPlayer.getMove(posibleMoves)
+            c,r = actualTurnPlayer.getMove(self.board)
+            if c != -1 or r != -1:
                 self.board.updateBoard(actualTurnPlayer.getTile(),c,r)
+                passCount = 0
             else:
                 view.printCannotMove()
                 passCount += 1

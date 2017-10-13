@@ -6,5 +6,10 @@ class HumanPlayer(Player):
         Player.__init__(self,tile)
         self.view = view
 
-    def getMove(self,posibleMoves):
-        return self.view.askMove(posibleMoves)
+    def getMove(self,board):
+        r = c = -1
+        #Check posible moves
+        posibleMoves = self.checkMoves(board)
+        if posibleMoves:
+            c,r = self.view.askMove(posibleMoves)
+        return c,r
