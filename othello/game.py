@@ -29,13 +29,14 @@ class Game():
             #Print actual board, score and turn
             view.printState(self.board)
             view.printTurn(self.board,actualTurnPlayer.getTile())
-            c,r = actualTurnPlayer.getMove(self.board)
-            if c != -1 or r != -1:
-                self.board.updateBoard(actualTurnPlayer.getTile(),c,r)
+            possibleMoves = actualTurnPlayer.checkMoves(self.board)
+            if possibleMoves:
                 passCount = 0
+                move = actualTurnPlayer.getMove(self.board,possibleMoves)
+                self.board.updateBoard(actualTurnPlayer.getTile(),move)
             else:
-                view.printCannotMove()
                 passCount += 1
+                view.printCannotMove()
             actualTurnPlayer = white if actualTurnPlayer is black else black
         #Print final Board and score
         view.printState(self.board)

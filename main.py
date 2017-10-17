@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from othello.game import Game
 from othello.qtrainer import QTrainer
-from othello.humanplayer import HumanPlayer
-from othello.randomplayer import RandomPlayer
+from players.humanplayer import HumanPlayer
+from players.randomplayer import RandomPlayer
 from views.consoleview import ConsoleView
+#from othello.qtable import QTable
 
 #Use a view and board
 view = ConsoleView()
@@ -12,7 +13,7 @@ gameMode = game.GameMode['train']
 #gameMode = view.getGameMode(game)
 if gameMode == game.GameMode['train']:
     #DQN vs Random
-    trainer = QTrainer(1,RandomPlayer(-1))
+    trainer = QTrainer(1,RandomPlayer(-1),view)
     trainer.run()
 else:
     if gameMode == game.GameMode['hvh']:

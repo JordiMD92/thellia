@@ -9,8 +9,8 @@ class QPlayer(Player):
 
     def __init__(self,tile,):
         Player.__init__(self,tile)
-        tf.reset_default_graph()
-
+        #TODO update all the class
+        #tf.reset_default_graph
         #createNetwork()
         #init = tf.global_variables_initializer()
 

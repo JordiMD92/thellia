@@ -34,17 +34,17 @@ class Board(object):
         """ Returns remaining pieces """
         return self.remaining_pieces
 
-    def updateBoard(self,tile,col,row):
+    def updateBoard(self,tile,move):
         """
         Updates board with new movement if is a valid move
         @param int tile
             1 for BLACK
             -1 for WHITE
-        @param int row
-            0-7 row position
-        @param int col
-            0-7 column position
+        @param int move
+            0-63 vector position
         """
+        row = move // 8
+        col = move % 8
         moves = self.isValidMove(tile,col,row)
         if moves:
             self.board[col][row] = tile

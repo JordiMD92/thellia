@@ -4,7 +4,9 @@ class Player:
         self.tile = tile
 
     def getScore(self,board):
-        """ Returns actual player score """
+        """ Returns actual player score
+        @param Board board
+        """
         return board.getScore()[self.tile]
 
     def getTile(self):
@@ -14,15 +16,15 @@ class Player:
     def checkMoves(self,board):
         """
         Check if the player can make a move
-        @param int[][] board
-        @return list(c,r)
-            list of posible moves in column/row format
+        @param Board board
+        @return list(c+r*8)
+            list of posible moves in 1 dimension format
         """
         posibleMoves = []
 
         for c in xrange(0,8):
             for r in xrange(0,8):
                 if board.isValidMove(self.tile,c,r):
-                    posibleMoves.append((c,r))
+                    posibleMoves.append(c+r*8)
 
         return posibleMoves
