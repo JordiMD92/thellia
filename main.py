@@ -10,11 +10,12 @@ from views.consoleview import ConsoleView
 view = ConsoleView()
 game = Game()
 gameMode = game.GameMode['train']
+load_model = False
 #gameMode = view.getGameMode(game)
 if gameMode == game.GameMode['train']:
     #DQN vs Random
     trainer = QTrainer(1,RandomPlayer(-1),view)
-    trainer.run()
+    trainer.run(load_model)
 else:
     if gameMode == game.GameMode['hvh']:
         #Human vs Human

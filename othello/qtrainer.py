@@ -16,15 +16,17 @@ class QTrainer():
 
     def __init__(self,tile,secondPlayer,view):
         # Set learning parameters
-        self.num_episodes = 1000
+        self.num_episodes = 10000
         self.lr = 0.01
         self.y = 0.99
         self.e = 1
         self.eDrop = 0.9 / self.num_episodes
         self.tau = 0.001 #Amount to update target network at each step.
         self.batch_size = 32 #Size of training batch
-        self.pre_train_steps = 2500 #Number of steps used before training updates begin.
+        self.pre_train_steps = 25000 #Number of steps used before training updates begin.
         self.total_steps = 0
+        self.path = "./dqn" #The path to save our model to.
+
         # Set players, view and networks
         tf.reset_default_graph()
         self.black = QPlayer(tile)
@@ -34,16 +36,26 @@ class QTrainer():
         self.view = view
 
 
-    def run(self):
+    def run(self,load_model):
         winB = winW = 0
         init = tf.global_variables_initializer()
+        saver = tf.train.Saver()
         trainables = tf.trainable_variables()
         targetOps = updateTargetGraph(trainables,self.tau)
         myBuffer = ExperienceBuffer()
+
+        #Make a path for our model to be saved in.
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+
         with tf.Session() as sess:
             sess.run(init)
-            updateTarget(targetOps,sess)
+            if load_model == True:
+                print "Loading Model..."
+                ckpt = tf.train.get_checkpoint_state(self.path)
+                saver.restore(sess,ckpt.model_checkpoint_path)
             for i in range(self.num_episodes):
+                gameBuffer = ExperienceBuffer()
                 #Reset enviorement and start new board
                 s = board.Board()
                 actualTurnPlayer = self.black
@@ -58,15 +70,15 @@ class QTrainer():
                             s.updateBoard(actualTurnPlayer.getTile(),move)
                         else:
                             #Choose an action by greedily (with e chance of random action) from the Q-network
-                            Q = sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[s.get1DBoard()]})
-                            if np.random.rand(1) < self.e:
+                            if np.random.rand(1) < self.e or self.total_steps < self.pre_train_steps:
                                 action = random.choice(possible_actions)
                             else:
+                                Q = sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[s.get1DBoard()]})
                                 action = self.get_best_possible_action(possible_actions,Q)
                             #Get new state and reward from environment
                             sPrime,r,d = self.get_next_state(actualTurnPlayer.getTile(),action,copy.deepcopy(s))
 
-                            myBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
+                            gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
 
                             if self.total_steps > self.pre_train_steps and self.total_steps % 5 == 0:
                                 #We use Double-DQN training algorithm
@@ -88,6 +100,11 @@ class QTrainer():
                     actualTurnPlayer = self.white if actualTurnPlayer is self.black else self.black
                 #End Game: Reduce chance of random action as we train the model.
                 self.e -= self.eDrop
+                myBuffer.add(gameBuffer.buffer)
+                #Periodically save the model.
+                if i % 1000 == 0:
+                    saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
+                    print("Saved Model")
                 #Print final Board and score
                 print "("+str(i)+")"
                 #self.view.printScore(s,s.getScore())
@@ -95,6 +112,8 @@ class QTrainer():
                     winB += 1
                 elif self.black.getScore(s) < self.white.getScore(s):
                     winW += 1
+
+            saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
         print "Black wins: " + str(winB) + " - White wins: " + str(winW)
         #self.view.printEndGame
         #print("Percent of succesful episodes: " + str(sum(self.rList)/self.num_episodes) + "%")
