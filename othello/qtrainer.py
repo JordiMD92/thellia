@@ -7,36 +7,45 @@ import copy
 import tensorflow as tf
 import board
 from qnetwork import QNetwork
+from experience_replay import ExperienceBuffer
 from players.qplayer import QPlayer
+from experience_replay import updateTarget
+from experience_replay import updateTargetGraph
 
 class QTrainer():
 
     def __init__(self,tile,secondPlayer,view):
         # Set learning parameters
-        self.num_episodes = 100
-        self.lr = 0.03
+        self.num_episodes = 1000
+        self.lr = 0.01
         self.y = 0.99
         self.e = 1
         self.eDrop = 0.9 / self.num_episodes
-        #create lists to contain total rewards
-        #self.rList = []
-
+        self.tau = 0.001 #Amount to update target network at each step.
+        self.batch_size = 32 #Size of training batch
+        self.pre_train_steps = 2500 #Number of steps used before training updates begin.
+        self.total_steps = 0
+        # Set players, view and networks
         tf.reset_default_graph()
         self.black = QPlayer(tile)
         self.white = secondPlayer
         self.mainQN = QNetwork(tf,self.lr)
+        self.targetQN = QNetwork(tf,self.lr)
         self.view = view
 
 
     def run(self):
-        init = tf.global_variables_initializer()
         winB = winW = 0
+        init = tf.global_variables_initializer()
+        trainables = tf.trainable_variables()
+        targetOps = updateTargetGraph(trainables,self.tau)
+        myBuffer = ExperienceBuffer()
         with tf.Session() as sess:
             sess.run(init)
+            updateTarget(targetOps,sess)
             for i in range(self.num_episodes):
                 #Reset enviorement and start new board
                 s = board.Board()
-                #rAll = 0
                 actualTurnPlayer = self.black
                 passCount = 0
                 #The Q-Network
@@ -55,15 +64,23 @@ class QTrainer():
                             else:
                                 action = self.get_best_possible_action(possible_actions,Q)
                             #Get new state and reward from environment
-                            sPrime,r = self.get_next_state(actualTurnPlayer.getTile(),action,copy.deepcopy(s))
-                            #Obtain the Q' values by feeding the new state through our network
-                            QPrime = sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[sPrime.get1DBoard()]})
-                            #Obtain maxQ' and set our target value for chosen action.
-                            Q[0,action] = r + self.y*np.max(QPrime)
-                            #Train our network using target and predicted Q values
-                            _ = sess.run([self.mainQN.updateModel,self.mainQN.W],feed_dict={self.mainQN.inputLayer:[s.get1DBoard()],self.mainQN.nextQ:Q})
-                            #rAll += r
+                            sPrime,r,d = self.get_next_state(actualTurnPlayer.getTile(),action,copy.deepcopy(s))
+
+                            myBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
+
+                            if self.total_steps > self.pre_train_steps and self.total_steps % 5 == 0:
+                                #We use Double-DQN training algorithm
+                                trainBatch = myBuffer.sample(self.batch_size)
+                                Q1 = sess.run(self.mainQN.predict,feed_dict={self.mainQN.inputLayer:np.vstack(trainBatch[:,3])})
+                                Q2 = sess.run(self.targetQN.Qout,feed_dict={self.targetQN.inputLayer:np.vstack(trainBatch[:,3])})
+                                end_multiplier = -(trainBatch[:,4] - 1)
+                                doubleQ = Q2[range(self.batch_size),Q1]
+                                targetQ = trainBatch[:,2] + (self.y*doubleQ * end_multiplier)
+                                _ = sess.run(self.mainQN.updateModel,feed_dict={self.mainQN.inputLayer:np.vstack(trainBatch[:,0]),self.mainQN.nextQ:targetQ,self.mainQN.actions:trainBatch[:,1]})
+                                updateTarget(targetOps,sess)
+
                             s = sPrime
+                            self.total_steps += 1
                     else:
                         passCount += 1
                         #self.view.printCannotMove()
@@ -71,7 +88,6 @@ class QTrainer():
                     actualTurnPlayer = self.white if actualTurnPlayer is self.black else self.black
                 #End Game: Reduce chance of random action as we train the model.
                 self.e -= self.eDrop
-                #self.rList.append(rAll)
                 #Print final Board and score
                 print "("+str(i)+")"
                 #self.view.printScore(s,s.getScore())
@@ -93,9 +109,12 @@ class QTrainer():
         """
         sPrime.updateBoard(tile,action)
         reward = -1
+        d = 0
         if sPrime.getScore()[tile] > sPrime.getScore()[-tile]:
             reward = 1
-        return sPrime,reward
+        if sPrime.getRemainingPieces() == 0:
+            d = 1
+        return sPrime,reward,d
 
     def get_best_possible_action(self,possible_moves,moves):
         """
