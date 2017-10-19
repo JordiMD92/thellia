@@ -4,7 +4,7 @@ class QNetwork(object):
     def __init__(self,tf,lr=0.01):
         #These lines establish the feed-forward part of the network used to choose actions
         self.inputLayer = tf.placeholder(shape=[None,64],dtype=tf.float32)
-        hidden = slim.fully_connected(self.inputLayer,192,activation_fn=tf.nn.tanh,biases_initializer=None)
+        hidden = slim.fully_connected(self.inputLayer,64,activation_fn=tf.nn.tanh,biases_initializer=None)
         self.Qout = slim.fully_connected(hidden,64,activation_fn=None,biases_initializer=None)
         self.predict = tf.argmax(self.Qout,1) #Get the best value
 

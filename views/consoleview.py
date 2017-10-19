@@ -40,6 +40,18 @@ class ConsoleView:
                 print("Invalid move, try again")
         return
 
+    def loadGames(self):
+        """ Ask if want to load human games """
+        print("Do you want to load games from DB??")
+        while True:
+            load_games = raw_input("Type [y] to load, otherwise [n]: ")
+            if load_games == 'y':
+                return True
+            if load_games == 'n':
+                return False
+            print("Invalid input, try again")
+        return
+
     def loadModel(self):
         """ Ask if want to load DQN trained model """
         print("Do you want to load previous model?")

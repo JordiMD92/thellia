@@ -6,10 +6,10 @@ class Board(object):
 
     def __init__(self):
         self.board = numpy.zeros((8,8), int)
-        self.board[3][3] = Board.BLACK
-        self.board[4][4] = Board.BLACK
-        self.board[3][4] = Board.WHITE
-        self.board[4][3] = Board.WHITE
+        self.board[3][3] = Board.WHITE
+        self.board[4][4] = Board.WHITE
+        self.board[3][4] = Board.BLACK
+        self.board[4][3] = Board.BLACK
 
         self.remaining_pieces = 8*8-4
         self.score = {Board.BLACK: 2, Board.WHITE: 2}
