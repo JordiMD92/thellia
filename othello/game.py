@@ -1,7 +1,7 @@
 import board
 
 class Game():
-    GameMode = {'hvh': 1, 'hvr': 2, 'rvr': 3, 'train':4}
+    GameMode = {'train':1, 'hvh': 2, 'hvr': 3, 'rvr': 4, 'qvr':5, 'qvh':6}
 
     def __init__(self):
         self.players = []

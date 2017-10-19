@@ -3,17 +3,16 @@ from othello.game import Game
 from othello.qtrainer import QTrainer
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
+from players.qplayer import QPlayer
 from views.consoleview import ConsoleView
-#from othello.qtable import QTable
 
 #Use a view and board
 view = ConsoleView()
 game = Game()
-gameMode = game.GameMode['train']
-load_model = False
-#gameMode = view.getGameMode(game)
+gameMode = view.getGameMode(game)
 if gameMode == game.GameMode['train']:
     #DQN vs Random
+    load_model = view.loadModel()
     trainer = QTrainer(1,RandomPlayer(-1),view)
     trainer.run(load_model)
 else:
@@ -32,7 +31,13 @@ else:
         game.addPlayer(RandomPlayer(-1))
     elif gameMode == game.GameMode['qvr']:
         #DQN vs Random
-        game.addPlayer(QPlayer(1))
+        load_model = view.loadModel()
+        game.addPlayer(QPlayer(1,load_model))
         game.addPlayer(RandomPlayer(-1))
+    elif gameMode == game.GameMode['qvh']:
+        #DQN vs Random
+        load_model = view.loadModel()
+        game.addPlayer(QPlayer(1,load_model))
+        game.addPlayer(HumanPlayer(-1,view))
     #Run game
     game.run(view)

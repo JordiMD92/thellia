@@ -6,7 +6,7 @@ class RandomPlayer(Player):
     def __init__(self,tile):
         Player.__init__(self,tile)
 
-    def getMove(self,possibleMoves):
+    def getMove(self,board,possibleMoves):
         """
         Get the player's move
         @param list(int) possibleMoves

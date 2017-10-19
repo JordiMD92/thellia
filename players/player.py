@@ -20,11 +20,11 @@ class Player:
         @return list(c+r*8)
             list of posible moves in 1 dimension format
         """
-        posibleMoves = []
+        possibleMoves = []
 
         for c in xrange(0,8):
             for r in xrange(0,8):
                 if board.isValidMove(self.tile,c,r):
-                    posibleMoves.append(c+r*8)
+                    possibleMoves.append(c+r*8)
 
-        return posibleMoves
+        return possibleMoves

@@ -2,39 +2,42 @@ from player import Player
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-import numpy as np
 import tensorflow as tf
+from othello.qnetwork import QNetwork
 
 class QPlayer(Player):
 
-    def __init__(self,tile,):
+    def __init__(self,tile,load_model):
         Player.__init__(self,tile)
-        #TODO update all the class
-        #tf.reset_default_graph
-        #createNetwork()
-        #init = tf.global_variables_initializer()
+        path = "./dqn" #The path to save our model to.
 
-    def createNetwork():
-        #These lines establish the feed-forward part of the network used to choose actions
-        inputLayer = tf.placeholder(shape=[1,64],dtype=tf.float32)
-        W = tf.Variable(tf.random_uniform([64,64],0,0.01))
-        Qout = tf.matmul(inputLayer,W)
+        tf.reset_default_graph()
+        self.mainQN = QNetwork(tf)
 
-    def getMove(self,board):
-        r = c = -1
+        init = tf.global_variables_initializer()
+        saver = tf.train.Saver()
+        self.sess = tf.InteractiveSession()
+        self.sess.run(init)
+        if load_model == True:
+            print "Loading Model..."
+            ckpt = tf.train.get_checkpoint_state(path)
+            saver.restore(self.sess,ckpt.model_checkpoint_path)
 
-        posibleMoves = checkMoves(self.board)
-        if posibleMoves:
-            #Choose an action by greedily (with e chance of random action) from the Q-network
-            actions = sess.run([Qout],feed_dict={inputLayer:[board.get1DBoard()]})
-            pos = get_best_possible_action(possible_actions,actions)
-        return pos[0],pos[1]
 
-    """ Get the best move in possible player moves """
-    def get_best_possible_action(possible_moves,moves):
-        sorted_moves = [(val,i) for i,val in enumerate(moves)]
+    def getMove(self,board,possibleMoves):
+        Q = self.sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[board.get1DBoard()]})
+        return self.get_best_possible_action(possibleMoves,Q)
+
+    def get_best_possible_action(self,possible_moves,moves):
+        """
+        Get the bes possible move from a list
+        @param list(int) possible_moves
+        @param list(int) moves
+        @return int move
+        """
+        sorted_moves = [(val,i) for i,val in enumerate(possible_moves)]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
         for move in sorted_moves:
-            pos[0],pos[1] = move[0] // 8, move[0] % 8
-            if pos in possible_moves:
-                break
+            if move[0] in possible_moves:
+                return move[0]
+        return -1

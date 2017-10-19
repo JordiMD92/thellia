@@ -16,14 +16,14 @@ class QTrainer():
 
     def __init__(self,tile,secondPlayer,view):
         # Set learning parameters
-        self.num_episodes = 10000
+        self.num_episodes = 30000
         self.lr = 0.01
         self.y = 0.99
         self.e = 1
         self.eDrop = 0.9 / self.num_episodes
         self.tau = 0.001 #Amount to update target network at each step.
         self.batch_size = 32 #Size of training batch
-        self.pre_train_steps = 25000 #Number of steps used before training updates begin.
+        self.pre_train_steps = 75000 #Number of steps used before training updates begin.
         self.total_steps = 0
         self.path = "./dqn" #The path to save our model to.
 
@@ -105,6 +105,7 @@ class QTrainer():
                 if i % 1000 == 0:
                     saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
                     print("Saved Model")
+                    print "Black wins: " + str(winB/self.num_episodes*100) + " - White wins: " + str(winW/self.num_episodes*100)
                 #Print final Board and score
                 print "("+str(i)+")"
                 #self.view.printScore(s,s.getScore())
@@ -114,7 +115,7 @@ class QTrainer():
                     winW += 1
 
             saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
-        print "Black wins: " + str(winB) + " - White wins: " + str(winW)
+        print "Black wins: " + str(winB/self.num_episodes*100) + " - White wins: " + str(winW/self.num_episodes*100)
         #self.view.printEndGame
         #print("Percent of succesful episodes: " + str(sum(self.rList)/self.num_episodes) + "%")
 

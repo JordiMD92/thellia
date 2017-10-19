@@ -1,7 +1,7 @@
 import tensorflow.contrib.slim as slim
 
 class QNetwork(object):
-    def __init__(self,tf,lr):
+    def __init__(self,tf,lr=0.01):
         #These lines establish the feed-forward part of the network used to choose actions
         self.inputLayer = tf.placeholder(shape=[None,64],dtype=tf.float32)
         hidden = slim.fully_connected(self.inputLayer,192,activation_fn=tf.nn.tanh,biases_initializer=None)
