@@ -11,7 +11,7 @@ class QNetwork(object):
         # Set learning parameters
         self.y = 0.99
         self.batch_size = 32 #Size of training batch
-        self.pre_train_steps = 2500 #Number of steps used before training updates begin.
+        self.pre_train_steps = 250 #Number of steps used before training updates begin.
         tau = 0.001 #Amount to update target network at each step.
         trainables = tf.trainable_variables()
         self.targetOps = updateTargetGraph(trainables,tau)

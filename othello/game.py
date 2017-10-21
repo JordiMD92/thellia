@@ -1,17 +1,22 @@
+from __future__ import division
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 import board
-from players.qplayerUpdated import QPlayer
 
 class Game:
     GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
 
-    def __init__(self, view):
+    def __init__(self, view, path):
         self.view = view
+        self.path = path
         self.players = []
         self.board = board.Board()
         self.total_steps = 0
+
+        #Make a path for our model to be saved in.
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
 
     def addPlayers(self, p1, p2):
         """ Add players to the game
@@ -43,17 +48,27 @@ class Game:
         """
         self.view = view
 
-    def run(self, num_episodes=1, gamesDB=[]):
+    def run(self, num_episodes=1, load_model=False, gamesDB=[]):
         """ Run othello game, run games for especified num_episodes
         @param int num_episode
         @param list(list(int)) gamesDB
         """
+        winB = winW = 0
         init = tf.global_variables_initializer()
+        try:
+            saver = tf.train.Saver()
+        except:
+            pass
         with tf.Session() as sess:
             sess.run(init)
+
+            if load_model == True:
+                print "Loading Model..."
+                ckpt = tf.train.get_checkpoint_state(self.path)
+                saver.restore(sess,ckpt.model_checkpoint_path)
             # Set session for QPlayer
-            self.players[0].setSession(sess)
-            self.players[1].setSession(sess)
+            self.players[0].setSessionEpisodes(sess,num_episodes)
+            self.players[1].setSessionEpisodes(sess,num_episodes)
 
             for i in range(num_episodes):
                 actualGame = []
@@ -64,10 +79,24 @@ class Game:
                 self.reset()
                 self.gameStart(actualGame)
                 # Update buffers and e for QPlayer
-                if isinstance(self.players[0],QPlayer):
-                    self.players[0].endGame(num_episodes)
-                if isinstance(self.players[1],QPlayer):
-                    self.players[1].endGame(num_episodes)
+                self.players[0].endGame()
+                self.players[1].endGame()
+
+                if i % 1000 == 0 and i > 0:
+                    saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
+                    print("Saved Model")
+                    print "Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
+
+                if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
+                    winB += 1
+                elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
+                    winW += 1
+            try:
+                saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
+            except:
+                pass
+        print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
+
 
     def gameStart(self, actualGame=[]):
         """ Game engine to run Othello, switch between players and do moves
@@ -93,7 +122,7 @@ class Game:
                 if actualGame:
                     try:
                         # If it is loading from DB, get next move
-                        possibleMoves = actualGame[60 - self.board.getRemainingPieces]
+                        possibleMoves = [actualGame[60 - self.board.getRemainingPieces()]]
                     except:
                         break
                 #Get player move and update board

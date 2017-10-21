@@ -1,7 +1,7 @@
 from player import Player
 import numpy as np
 import random
-from othello.qnetworkUpdated import QNetwork
+from othello.qnetwork import QNetwork
 from othello.experience_replay import ExperienceBuffer
 
 class QPlayer(Player):
@@ -14,6 +14,30 @@ class QPlayer(Player):
         self.myBuffer = ExperienceBuffer()
         self.gameBuffer = ExperienceBuffer()
         self.e = 1
+        self.sess = None
+        self.num_episodes = 1
+        self.train = train
+
+    def setSessionEpisodes(self,sess,num_episodes):
+        """ Update player tf session
+        @param tfSession sess
+        """
+        self.sess = sess
+        self.num_episodes = num_episodes
+        self.QN.pre_train_steps = num_episodes * 25
+        self.targetQN.pre_train_steps = num_episodes * 25
+
+    def setTrain(self,train):
+        """ Update if player trains
+        @param bool train
+        """
+        self.train = train
+
+    def endGame(self):
+        """ Update e greedy and game buffer """
+        self.e -= (0.9/self.num_episodes)
+        self.myBuffer.add(self.gameBuffer.buffer)
+        self.gameBuffer = ExperienceBuffer()
 
     def getMove(self,s,possibleMoves,total_steps):
         """ Get the player's move
@@ -34,14 +58,6 @@ class QPlayer(Player):
             self.gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
             self.QN.update(total_steps,self.targetQN,self.myBuffer,self.sess)
         return action
-
-    def endGame(self,num_episodes):
-        """ Update e greedy and get played game buffer
-        @param int num_episodes
-        """
-        self.e -= (0.9/num_episodes)
-        self.myBuffer.add(self.gameBuffer.buffer)
-        self.gameBuffer = ExperienceBuffer()
 
     def get_best_possible_action(self,possible_moves,moves):
         """

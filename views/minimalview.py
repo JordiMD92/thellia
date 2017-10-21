@@ -48,7 +48,7 @@ class MinimalView:
             try:
                 if int(num_episodes) == 0:
                     return False, 1
-                elif int(num_episodes) > 1:
+                elif int(num_episodes) > 0:
                     return True, int(num_episodes)
                 print("Invalid input, try again")
             except:
@@ -81,7 +81,7 @@ class MinimalView:
                 return False
             print("Invalid input, try again")
         return
-        
+
     def printBoard(self,board):
         pass
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env python
-from othello.gameUpdated import Game
+from othello.game import Game
 from views.consoleview import ConsoleView
 from views.minimalview import MinimalView
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
-from players.qplayerUpdated import QPlayer
+from players.qplayer import QPlayer
 
 # Use view and initalize game
+dqnPath = "./dqn"
 view = MinimalView()
-game = Game(view)
+game = Game(view,dqnPath)
 
 gameMode = view.getGameMode(game)
 if gameMode == game.GameMode['hvh']:
@@ -40,6 +41,7 @@ elif gameMode == game.GameMode['qvr']:
 # Train AI
 num_episodes = 1
 train = False
+load_model = False
 if gameMode >= 4:
     # Load DB to memory
     load_episodes = view.loadGames()
@@ -48,19 +50,21 @@ if gameMode >= 4:
         gamesDB,load_episodes = game.loadGames("DB/db",load_episodes)
         game.setView(MinimalView())
         game.addPlayers(QPlayer(1,True),QPlayer(-1,True))
-        game.run(load_episodes,gamesDB)
+        game.run(load_episodes,False,gamesDB)
         p1DB,p2DB = game.getPlayers()
         if isinstance(p1,QPlayer):
             p1 = p1DB
         if isinstance(p2,QPlayer):
             p2 = p2DB
-        game = Game(view)
+        game = Game(view,dqnPath)
 
     train, num_episodes = view.isTrainning()
     p1.setTrain(train)
     p2.setTrain(train)
 
+    load_model = view.loadModel()
+
 game.addPlayers(p1,p2)
 
 #Run game
-game.run(num_episodes)
+game.run(num_episodes,load_model)

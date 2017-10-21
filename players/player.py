@@ -2,20 +2,20 @@ class Player:
 
     def __init__(self,tile,train=False):
         self.tile = tile
-        self.sess = None
-        self.train = train
 
-    def setSession(self,sess):
+    def setSessionEpisodes(self,sess=None,num_episodes=1):
         """ Update player tf session
-        @param tfSession sess
         """
-        self.sess = sess
+        pass
 
-    def setTrain(self,train):
+    def setTrain(self,train=None):
         """ Update if player trains
-        @param bool train
         """
-        self.train = train
+        pass
+
+    def endGame(self):
+        """ Update e greedy and game buffer """
+        pass
 
     def getScore(self,board):
         """ Returns actual player score
