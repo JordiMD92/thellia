@@ -1,65 +1,66 @@
 #!/usr/bin/env python
-from othello.game import Game
-from othello.qtrainer import QTrainer
+from othello.gameUpdated import Game
+from views.consoleview import ConsoleView
+from views.minimalview import MinimalView
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
-from players.qplayer import QPlayer
-from views.consoleview import ConsoleView
-from collections import deque
+from players.qplayerUpdated import QPlayer
 
-def loadGames(db):
-    with open(db+"/db","r") as f:
-        lines = f.readlines()
-        lines = [deque(line.strip()) for line in lines]
-        newLines = []
-        for line in lines:
-            newLine = []
-            while line:
-                c=line.popleft()
-                r=line.popleft()
-                move = (ord(c)-97)+(int(r)-1)*8
-                newLine.append(move)
-            newLines.append(newLine)
-    return newLines
-
-# Use a view and board
-view = ConsoleView()
-game = Game()
-gamesDB = []
-
-# Load DB to memory
-if view.loadGames():
-    gamesDB = loadGames("DB")
+# Use view and initalize game
+view = MinimalView()
+game = Game(view)
 
 gameMode = view.getGameMode(game)
-if gameMode == game.GameMode['train']:
+if gameMode == game.GameMode['hvh']:
+    #Human vs Human
+    p1 = HumanPlayer(1,view)
+    p2 = HumanPlayer(-1,view)
+elif gameMode == game.GameMode['hvr']:
+    #Human vs Random, ask tile and create players
+    playerTile = view.getHumanTile()
+    p1 = HumanPlayer(playerTile,view)
+    p2 = RandomPlayer(-playerTile)
+elif gameMode == game.GameMode['rvr']:
+    #Random vs Random
+    p1 = RandomPlayer(1)
+    p2 = RandomPlayer(-1)
+elif gameMode == game.GameMode['qvq']:
+    #DQN vs DQN
+    p1 = QPlayer(1)
+    p2 = QPlayer(-1)
+elif gameMode == game.GameMode['qvh']:
+    #DQN vs Human
+    p1 = QPlayer(1)
+    p2 = HumanPlayer(-1,view)
+elif gameMode == game.GameMode['qvr']:
     #DQN vs Random
-    load_model = view.loadModel()
-    trainer = QTrainer(1,RandomPlayer(-1),gamesDB,view)
-    trainer.run(load_model)
-else:
-    if gameMode == game.GameMode['hvh']:
-        #Human vs Human
-        game.addPlayer(HumanPlayer(1,view))
-        game.addPlayer(HumanPlayer(-1,view))
-    elif gameMode == game.GameMode['hvr']:
-        #Human vs Random, ask tile and create players
-        playerTile = view.getHumanTile()
-        game.addPlayer(HumanPlayer(playerTile,view))
-        game.addPlayer(RandomPlayer(-playerTile))
-    elif gameMode == game.GameMode['rvr']:
-        #Random vs Random
-        game.addPlayer(RandomPlayer(1))
-        game.addPlayer(RandomPlayer(-1))
-    elif gameMode == game.GameMode['qvr']:
-        #DQN vs Random
-        load_model = view.loadModel()
-        game.addPlayer(QPlayer(1,load_model))
-        game.addPlayer(RandomPlayer(-1))
-    elif gameMode == game.GameMode['qvh']:
-        #DQN vs Random
-        load_model = view.loadModel()
-        game.addPlayer(QPlayer(1,load_model))
-        game.addPlayer(HumanPlayer(-1,view))
-    #Run game
-    game.run(view)
+    p1 = QPlayer(1)
+    p2 = RandomPlayer(-1)
+
+# Train AI
+num_episodes = 1
+train = False
+if gameMode >= 4:
+    # Load DB to memory
+    load_episodes = view.loadGames()
+    if load_episodes:
+        print "Loading games..."
+        gamesDB,load_episodes = game.loadGames("DB/db",load_episodes)
+        game.setView(MinimalView())
+        game.addPlayers(QPlayer(1,True),QPlayer(-1,True))
+        game.run(load_episodes,gamesDB)
+        p1DB,p2DB = game.getPlayers()
+        if isinstance(p1,QPlayer):
+            p1 = p1DB
+        if isinstance(p2,QPlayer):
+            p2 = p2DB
+        game = Game(view)
+
+    train, num_episodes = view.isTrainning()
+    p1.setTrain(train)
+    p2.setTrain(train)
+
+game.addPlayers(p1,p2)
+
+#Run game
+game.run(num_episodes)

@@ -1,4 +1,4 @@
-class ConsoleView:
+class MinimalView:
 
     def getGameMode(self,game):
         print("Welcome to Thellia")
@@ -81,46 +81,24 @@ class ConsoleView:
                 return False
             print("Invalid input, try again")
         return
-
+        
     def printBoard(self,board):
-        """ Print actual board state """
-        print("   A   B   C   D   E   F   G   H  ")
-        print(" - - - - - - - - - - - - - - - - -")
-        for r in range(0,8,1):
-            row = ""
-            for c in range(0,8,1):
-                value = "|   "
-                if board[c][r] == -1: value = "| X "
-                if board[c][r] == 1: value = "| O "
-                row = row+value
-            print(str(r+1)+row+"|")
-            print(" - - - - - - - - - - - - - - - - -")
+        pass
 
     def printScore(self,board,score):
-        """ Print actual score """
-        print("White score = "+str(score[board.WHITE]))
-        print("Black score = "+str(score[board.BLACK]))
+        pass
 
     def printState(self,board):
-        """ Print board and score """
-        self.printBoard(board.getBoard())
-        self.printScore(board,board.getScore())
+        pass
 
     def printTurn(self,board,tile):
-        """ Print which turn is """
-        if tile == board.BLACK:
-            print "\n\nBlack turn 'O'"
-        else:
-            print "\n\nWhite turn 'X'"
+        pass
 
     def printInvalidMove(self):
-        """ Print invalid move """
-        print "Invalid move! Try again"
+        pass
 
     def printCannotMove(self):
-        """ Print can't move """
-        print "Can't move! :("
+        pass
 
     def printEndGame(self):
-        """ Print end game """
-        print "Game ended, thanks for playing! :)"
+        pass

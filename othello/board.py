@@ -34,6 +34,24 @@ class Board(object):
         """ Returns remaining pieces """
         return self.remaining_pieces
 
+    def next(self,tile,action):
+        """
+        Update board and return new board and reward
+        @param int tile
+        @param int action
+        @param Board s
+        @return Board,int,bool sPrime,reward,d
+        """
+        self.updateBoard(tile,action)
+        reward = -1
+        d = 0
+        if self.getScore()[tile] > self.getScore()[-tile]:
+            reward = 1
+        if self.getRemainingPieces() == 0:
+            d = 1
+        return self,reward,d
+
+
     def updateBoard(self,tile,move):
         """
         Updates board with new movement if is a valid move

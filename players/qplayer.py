@@ -1,32 +1,47 @@
 from player import Player
-
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-import tensorflow as tf
-from othello.qnetwork import QNetwork
+import numpy as np
+import random
+from othello.qnetworkUpdated import QNetwork
+from othello.experience_replay import ExperienceBuffer
 
 class QPlayer(Player):
 
-    def __init__(self,tile,load_model):
-        Player.__init__(self,tile)
-        path = "./dqn" #The path to save our model to.
+    def __init__(self,tile,train=False):
+        Player.__init__(self,tile,train)
 
-        tf.reset_default_graph()
-        self.mainQN = QNetwork(tf)
+        self.QN = QNetwork()
+        self.targetQN = QNetwork()
+        self.myBuffer = ExperienceBuffer()
+        self.gameBuffer = ExperienceBuffer()
+        self.e = 1
 
-        init = tf.global_variables_initializer()
-        saver = tf.train.Saver()
-        self.sess = tf.InteractiveSession()
-        self.sess.run(init)
-        if load_model == True:
-            print "Loading Model..."
-            ckpt = tf.train.get_checkpoint_state(path)
-            saver.restore(self.sess,ckpt.model_checkpoint_path)
+    def getMove(self,s,possibleMoves,total_steps):
+        """ Get the player's move
+        @param board s
+        @param list(int) possibleMoves
+        @param int total_steps
+        @return int action
+        """
+        #Choose move e-greedyly, random or from network
+        if np.random.rand(1) < self.e or total_steps < self.QN.pre_train_steps:
+            action = random.choice(possibleMoves)
+        else:
+            Q = self.QN.getQout(s,self.sess)
+            action = self.get_best_possible_action(possibleMoves,Q)
+        if self.train:
+            #Get new state and reward from environment and update
+            sPrime,r,d = s.next(self.tile,action)
+            self.gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
+            self.QN.update(total_steps,self.targetQN,self.myBuffer,self.sess)
+        return action
 
-
-    def getMove(self,board,possibleMoves):
-        Q = self.sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[board.get1DBoard()]})
-        return self.get_best_possible_action(possibleMoves,Q)
+    def endGame(self,num_episodes):
+        """ Update e greedy and get played game buffer
+        @param int num_episodes
+        """
+        self.e -= (0.9/num_episodes)
+        self.myBuffer.add(self.gameBuffer.buffer)
+        self.gameBuffer = ExperienceBuffer()
 
     def get_best_possible_action(self,possible_moves,moves):
         """
