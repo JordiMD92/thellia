@@ -1,6 +1,7 @@
 from __future__ import division
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import timeit
 import tensorflow as tf
 import board
 
@@ -53,6 +54,7 @@ class Game:
         @param int num_episode
         @param list(list(int)) gamesDB
         """
+        start = timeit.default_timer()
         winB = winW = 0
         init = tf.global_variables_initializer()
         try:
@@ -74,8 +76,6 @@ class Game:
                 actualGame = []
                 if gamesDB:
                     actualGame = gamesDB[i]
-                else:
-                    print "Espisode: "+str(i+1)
                 self.reset()
                 self.gameStart(actualGame)
                 # Update buffers and e for QPlayer
@@ -86,6 +86,8 @@ class Game:
                     saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
                     print("Saved Model")
                     print "Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
+                    pause = timeit.default_timer()
+                    print "Temps: " + str(pause-start)
 
                 if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
                     winB += 1
@@ -96,6 +98,8 @@ class Game:
             except:
                 pass
         print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
+        stop = timeit.default_timer()
+        print "Temps Final: " + str(stop-start)
 
 
     def gameStart(self, actualGame=[]):

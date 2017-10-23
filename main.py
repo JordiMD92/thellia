@@ -5,11 +5,13 @@ from views.minimalview import MinimalView
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
 from players.qplayer import QPlayer
+from othello.qnetwork import QNetwork
 
 # Use view and initalize game
 dqnPath = "./dqn"
 view = MinimalView()
 game = Game(view,dqnPath)
+QN = QNetwork(0.01)
 
 gameMode = view.getGameMode(game)
 if gameMode == game.GameMode['hvh']:
@@ -27,15 +29,15 @@ elif gameMode == game.GameMode['rvr']:
     p2 = RandomPlayer(-1)
 elif gameMode == game.GameMode['qvq']:
     #DQN vs DQN
-    p1 = QPlayer(1)
-    p2 = QPlayer(-1)
+    p1 = QPlayer(1,QN)
+    p2 = QPlayer(-1,QN)
 elif gameMode == game.GameMode['qvh']:
     #DQN vs Human
-    p1 = QPlayer(1)
+    p1 = QPlayer(1,QN)
     p2 = HumanPlayer(-1,view)
 elif gameMode == game.GameMode['qvr']:
     #DQN vs Random
-    p1 = QPlayer(1)
+    p1 = QPlayer(1,QN)
     p2 = RandomPlayer(-1)
 
 # Train AI
@@ -49,14 +51,10 @@ if gameMode >= 4:
         print "Loading games..."
         gamesDB,load_episodes = game.loadGames("DB/db",load_episodes)
         game.setView(MinimalView())
-        game.addPlayers(QPlayer(1,True),QPlayer(-1,True))
+        game.addPlayers(p1,p2)
         game.run(load_episodes,False,gamesDB)
-        p1DB,p2DB = game.getPlayers()
-        if isinstance(p1,QPlayer):
-            p1 = p1DB
-        if isinstance(p2,QPlayer):
-            p2 = p2DB
-        game = Game(view,dqnPath)
+        p1,p2 = game.getPlayers()
+        game = Game(MinimalView(),dqnPath)
 
     train, num_episodes = view.isTrainning()
     p1.setTrain(train)
@@ -65,6 +63,8 @@ if gameMode >= 4:
     load_model = view.loadModel()
 
 game.addPlayers(p1,p2)
+game.setView(view)
 
 #Run game
+print "Game Running..."
 game.run(num_episodes,load_model)
