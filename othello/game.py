@@ -2,28 +2,31 @@ from __future__ import division
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import timeit
+import time
 import tensorflow as tf
 import board
+import matplotlib.pyplot as plt
 
 class Game:
     GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
 
     def __init__(self, view, path):
         self.view = view
-        self.path = path
         self.players = []
         self.board = board.Board()
         self.total_steps = 0
 
+        self.gameModel = path+"/"+time.strftime("%Y-%m-%d_%H:%M:%S")
         #Make a path for our model to be saved in.
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        if not os.path.exists(self.gameModel):
+            os.makedirs(self.gameModel)
 
     def addPlayers(self, p1, p2):
         """ Add players to the game
         @param Player p1
         @param Player p2
         """
+        self.players = []
         self.players.append(p1)
         self.players.append(p2)
 
@@ -56,6 +59,7 @@ class Game:
         """
         start = timeit.default_timer()
         winB = winW = 0
+        wins = []
         init = tf.global_variables_initializer()
         try:
             saver = tf.train.Saver()
@@ -64,26 +68,28 @@ class Game:
         with tf.Session() as sess:
             sess.run(init)
 
-            if load_model == True:
-                print "Loading Model..."
-                ckpt = tf.train.get_checkpoint_state(self.path)
+            if load_model:
+                print "Loading Model: "+load_model
+                ckpt = tf.train.get_checkpoint_state(load_model)
                 saver.restore(sess,ckpt.model_checkpoint_path)
             # Set session for QPlayer
             self.players[0].setSessionEpisodes(sess,num_episodes)
             self.players[1].setSessionEpisodes(sess,num_episodes)
 
             for i in range(num_episodes):
-                actualGame = []
+                dbGame = []
                 if gamesDB:
-                    actualGame = gamesDB[i]
+                    dbGame = gamesDB[i]
                 self.reset()
-                self.gameStart(actualGame)
+                self.gameStart(dbGame)
                 # Update buffers and e for QPlayer
                 self.players[0].endGame()
                 self.players[1].endGame()
 
+                if i % 100 == 0 and i > 0:
+                    wins.append(((winB/i*100),(winW/i*100)))
                 if i % 1000 == 0 and i > 0:
-                    saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
+                    saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
                     print("Saved Model")
                     print "Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
                     pause = timeit.default_timer()
@@ -94,15 +100,24 @@ class Game:
                 elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
                     winW += 1
             try:
-                saver.save(sess,self.path+'/model-'+str(i)+'.ckpt')
+                saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
+                print "Model saved on: " + self.gameModel
             except:
                 pass
         print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
         stop = timeit.default_timer()
         print "Temps Final: " + str(stop-start)
+        plt.figure(1)
+        plt.subplot(111)
+        plt.plot([x[0] for x in wins],'*')
+        plt.axis([0, len(wins)-1, 0, 100])
+        plt.show()
+        #plt.subplot(112)
+        #plt.plot([x[1] for x in wins],'*')
+        #plt.axis([1, len(wins)-1, 0, 100])
+        #plt.show()
 
-
-    def gameStart(self, actualGame=[]):
+    def gameStart(self, dbGame=[]):
         """ Game engine to run Othello, switch between players and do moves
         @param list(int) actualGame
         """
@@ -123,10 +138,10 @@ class Game:
             if possibleMoves:
                 # If there are move, play
                 passCount = 0
-                if actualGame:
+                if dbGame:
                     try:
                         # If it is loading from DB, get next move
-                        possibleMoves = [actualGame[60 - self.board.getRemainingPieces()]]
+                        possibleMoves = [dbGame[60 - self.board.getRemainingPieces()]]
                     except:
                         break
                 #Get player move and update board
@@ -142,7 +157,7 @@ class Game:
         self.view.printState(self.board)
         self.view.printEndGame()
 
-    def loadGames(self, path,load_episodes):
+    def loadGames(self, path, load_episodes):
         """ Load professional saved games
         @param String path
         @param int load_episodes
@@ -167,4 +182,5 @@ class Game:
                         preChar = char
                     i += 1
                 newLines.append(newLine)
-        return newLines,load_episodes
+            self.run(load_episodes,False,newLines)
+            return self.gameModel

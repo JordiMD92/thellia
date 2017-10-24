@@ -1,70 +1,71 @@
 #!/usr/bin/env python
+import os
 from othello.game import Game
 from views.consoleview import ConsoleView
 from views.minimalview import MinimalView
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
 from players.qplayer import QPlayer
-from othello.qnetwork import QNetwork
+from othello.qnetwork_64 import QNetwork64
+from othello.qnetwork_129 import QNetwork129
+from othello.qnetwork_relu import QNetworkRelu
 
-# Use view and initalize game
-dqnPath = "./dqn"
-view = MinimalView()
-game = Game(view,dqnPath)
-QN = QNetwork(0.01)
+def gameMode():
+    gameMode = view.getGameMode(game)
+    if gameMode == game.GameMode['hvh']:
+        #Human vs Human
+        return HumanPlayer(1,view),HumanPlayer(-1,view),gameMode
+    elif gameMode == game.GameMode['hvr']:
+        #Human vs Random, ask tile and create players
+        playerTile = view.getHumanTile()
+        return HumanPlayer(playerTile,view), RandomPlayer(-playerTile),gameMode
+    elif gameMode == game.GameMode['rvr']:
+        #Random vs Random
+        return RandomPlayer(1), RandomPlayer(-1),gameMode
+    elif gameMode == game.GameMode['qvq']:
+        #DQN vs DQN
+        return QPlayer(1,QN), QPlayer(-1,QN),gameMode
+    elif gameMode == game.GameMode['qvh']:
+        #DQN vs Human
+        return QPlayer(1,QN), HumanPlayer(-1,view),gameMode
+    elif gameMode == game.GameMode['qvr']:
+        #DQN vs Random
+        return QPlayer(1,QN), RandomPlayer(-1),gameMode
 
-gameMode = view.getGameMode(game)
-if gameMode == game.GameMode['hvh']:
-    #Human vs Human
-    p1 = HumanPlayer(1,view)
-    p2 = HumanPlayer(-1,view)
-elif gameMode == game.GameMode['hvr']:
-    #Human vs Random, ask tile and create players
-    playerTile = view.getHumanTile()
-    p1 = HumanPlayer(playerTile,view)
-    p2 = RandomPlayer(-playerTile)
-elif gameMode == game.GameMode['rvr']:
-    #Random vs Random
-    p1 = RandomPlayer(1)
-    p2 = RandomPlayer(-1)
-elif gameMode == game.GameMode['qvq']:
-    #DQN vs DQN
-    p1 = QPlayer(1,QN)
-    p2 = QPlayer(-1,QN)
-elif gameMode == game.GameMode['qvh']:
-    #DQN vs Human
-    p1 = QPlayer(1,QN)
-    p2 = HumanPlayer(-1,view)
-elif gameMode == game.GameMode['qvr']:
-    #DQN vs Random
-    p1 = QPlayer(1,QN)
-    p2 = RandomPlayer(-1)
-
-# Train AI
-num_episodes = 1
-train = False
-load_model = False
-if gameMode >= 4:
+def loadDB(dbPath,game):
     # Load DB to memory
-    load_episodes = view.loadGames()
-    if load_episodes:
-        print "Loading games..."
-        gamesDB,load_episodes = game.loadGames("DB/db",load_episodes)
+    num_games = view.loadGames()
+    if num_games:
         game.setView(MinimalView())
-        game.addPlayers(p1,p2)
-        game.run(load_episodes,False,gamesDB)
-        p1,p2 = game.getPlayers()
-        game = Game(MinimalView(),dqnPath)
+        game.addPlayers(QPlayer(1,QN),QPlayer(-1,QN))
+        dbModel = game.loadGames(dbPath,num_games)
+        print "DB saved on: " + dbModel
 
-    train, num_episodes = view.isTrainning()
-    p1.setTrain(train)
-    p2.setTrain(train)
+def loadModel(modelPath):
+    return view.loadModel(modelPath)
 
-    load_model = view.loadModel()
+# Use view and initalize game and QNetwork
+num_episodes = 1
+modelPath = "./models"
+dbPath = "./DB/db"
+view = MinimalView()
+game = Game(view,modelPath)
+QN = QNetwork64(0.001)
 
+p1,p2,gameMode = gameMode()
+print ""
+loadDB(dbPath,game)
+print ""
+game = Game(view,modelPath)
 game.addPlayers(p1,p2)
+model = loadModel(modelPath)
+print ""
+num_episodes = view.getTrainEpisodes()
+print ""
 game.setView(view)
 
 #Run game
-print "Game Running..."
-game.run(num_episodes,load_model)
+if num_episodes > 0:
+    print "Game Running..."
+    game.run(num_episodes,model)
+print "Application finalized"

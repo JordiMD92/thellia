@@ -4,12 +4,9 @@ import tensorflow as tf
 import numpy as np
 
 """
-64:200:150:100:64       Sigmoide
-128+1:200:150:100:64
-
 64:200:190:180...:64 RELU
 """
-class QNetwork(object):
+class QNetworkRelu(object):
     def __init__(self,lr=0.01):
         # Set learning parameters
         self.y = 0.99
@@ -20,10 +17,23 @@ class QNetwork(object):
 
         #These lines establish the feed-forward part of the network used to choose actions
         self.inputLayer = tf.placeholder(shape=[None,64],dtype=tf.float32)
-        hidden = tf.layers.dense(self.inputLayer, 200, activation = tf.nn.sigmoid)
-        hidden = tf.layers.dense(hidden, 150, activation = tf.nn.sigmoid)
-        hidden = tf.layers.dense(hidden, 100, activation = tf.nn.sigmoid)
-        self.Qout = tf.layers.dense(hidden,64,activation = tf.nn.sigmoid)
+        hidden = tf.layers.dense(self.inputLayer, 200, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 190, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 180, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 170, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 160, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 150, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 140, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 130, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 120, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 110, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 100, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 90, activation = tf.nn.relu)
+        hidden = tf.layers.dense(hidden, 80, activation = tf.nn.relu)
+        # Dropout
+        dropout = tf.layers.dropout(inputs=hidden, rate=0.4)
+        # Qout Layer
+        self.Qout = tf.layers.dense(inputs=dropout, units=64)
         self.predict = tf.argmax(self.Qout,1) #Get the best value
 
         #Obtain the loss by taking the sum of squares difference between the target and prediction Q values.
@@ -32,7 +42,7 @@ class QNetwork(object):
         trainer = tf.train.GradientDescentOptimizer(lr)
         self.updateModel = trainer.minimize(self.loss)
 
-    def getQout(self,s,sess):
+    def getQout(self,s,tile,sess):
         """ Return Q-values for the QPlayer
         @param board s
         @param tfSession sess

@@ -5,8 +5,8 @@ from othello.experience_replay import ExperienceBuffer
 
 class QPlayer(Player):
 
-    def __init__(self,tile,QN,train=True):
-        Player.__init__(self,tile,train)
+    def __init__(self,tile,QN):
+        Player.__init__(self,tile)
 
         self.QN = QN
         self.myBuffer = ExperienceBuffer()
@@ -15,7 +15,6 @@ class QPlayer(Player):
         self.sess = None
         self.num_episodes = 1
         self.pre_train_steps = 25
-        self.train = train
 
     def setSessionEpisodes(self,sess,num_episodes):
         """ Update player tf session
@@ -24,12 +23,6 @@ class QPlayer(Player):
         self.sess = sess
         self.num_episodes = num_episodes
         self.pre_train_steps = num_episodes * 25
-
-    def setTrain(self,train):
-        """ Update if player trains
-        @param bool train
-        """
-        self.train = train
 
     def endGame(self):
         """ Update e greedy and game buffer """
@@ -48,14 +41,14 @@ class QPlayer(Player):
         if np.random.rand(1) < self.e or total_steps < self.pre_train_steps:
             action = random.choice(possibleMoves)
         else:
-            Q = self.QN.getQout(s,self.sess)
+            Q = self.QN.getQout(s,self.tile,self.sess)
             action = self.get_best_possible_action(possibleMoves,Q)
-        if self.train:
-            #Get new state and reward from environment and update
-            sPrime,r,d = s.next(self.tile,action)
-            self.gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
-            if total_steps > self.pre_train_steps and total_steps % 5 == 0:
-                self.QN.update(self.myBuffer,self.sess)
+
+        #Get new state and reward from environment and update
+        sPrime,r,d = s.next(self.tile,action)
+        self.gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
+        if total_steps > self.pre_train_steps and total_steps % 5 == 0:
+            self.QN.update(self.myBuffer,self.sess)
         return action
 
     def get_best_possible_action(self,possible_moves,moves):

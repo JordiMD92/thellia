@@ -1,15 +1,10 @@
 class Player:
 
-    def __init__(self,tile,train=False):
+    def __init__(self,tile):
         self.tile = tile
 
     def setSessionEpisodes(self,sess=None,num_episodes=1):
         """ Update player tf session
-        """
-        pass
-
-    def setTrain(self,train=None):
-        """ Update if player trains
         """
         pass
 

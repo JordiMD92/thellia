@@ -1,3 +1,4 @@
+import os
 class MinimalView:
 
     def getGameMode(self,game):
@@ -40,16 +41,14 @@ class MinimalView:
                 print("Invalid move, try again")
         return
 
-    def isTrainning(self):
+    def getTrainEpisodes(self):
         """ Ask if the IA will train """
         print("Do you want to train the IA?")
         while True:
-            num_episodes = raw_input("Type [0] not train, > 0 to train : ")
+            num_episodes = raw_input("Type number iterations to train, [0] to not train: ")
             try:
-                if int(num_episodes) == 0:
-                    return False, 1
-                elif int(num_episodes) > 0:
-                    return True, int(num_episodes)
+                if int(num_episodes) >= 0:
+                    return int(num_episodes)
                 print("Invalid input, try again")
             except:
                 print("Invalid input, try again")
@@ -70,16 +69,30 @@ class MinimalView:
                 print("Invalid input, try again")
         return
 
-    def loadModel(self):
+    def loadModel(self,path):
         """ Ask if want to load DQN trained model """
         print("Do you want to load previous model?")
+        folders = os.walk(path).next()[1]
+        models = []
+        i = 0
+        for folder in folders:
+            try:
+                os.rmdir(path+"/"+folder)
+            except:
+                models.append(folder)
+        for model in models:
+            i+=1
+            print "["+str(i)+"] "+model
         while True:
-            load_model = raw_input("Type [y] to load, otherwise [n]: ")
-            if load_model == 'y':
-                return True
-            if load_model == 'n':
-                return False
-            print("Invalid input, try again")
+            load_model = raw_input("Type [0] not to load, otherwise > 1: ")
+            try:
+                if int(load_model) == 0:
+                    return False
+                elif int(load_model) > 0 and int(load_model) <= len(models):
+                    return path+"/"+models[int(load_model)-1]
+                print("Invalid input, try again")
+            except:
+                print("Invalid input, try again")
         return
 
     def printBoard(self,board):

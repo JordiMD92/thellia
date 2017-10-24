@@ -26,6 +26,25 @@ class Board(object):
         """ Returns actual state of board in 1 Dimension"""
         return self.board.reshape((64))
 
+    def get128Board(self,tile):
+        """ Returns actual state of board in 1 Dimension of 128 positions,
+        half for black pieces positions, other half for white positions """
+        oneD = self.get1DBoard()
+        shapedBoard = numpy.zeros(129,int)
+        idx = 0
+        for pos in oneD:
+            if pos == 0:
+                shapedBoard[idx] = 0
+                shapedBoard[idx+64] = 0
+            elif pos == self.BLACK:
+                shapedBoard[idx] = 1
+            else:
+                shapedBoard[idx+64] = 1
+            idx += 1
+
+        shapedBoard[128] = (1+tile)/2
+        return shapedBoard
+
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=7) and (r>=0) and (r<=7)
