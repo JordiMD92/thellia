@@ -5,7 +5,7 @@ import timeit
 import time
 import tensorflow as tf
 import board
-import matplotlib.pyplot as plt
+from othello.process_results import ProcessResults
 
 class Game:
     GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
@@ -15,6 +15,7 @@ class Game:
         self.players = []
         self.board = board.Board()
         self.total_steps = 0
+        self.pr = ProcessResults()
 
         self.gameModel = path+"/"+time.strftime("%Y-%m-%d_%H:%M:%S")
         #Make a path for our model to be saved in.
@@ -72,6 +73,11 @@ class Game:
                 print "Loading Model: "+load_model
                 ckpt = tf.train.get_checkpoint_state(load_model)
                 saver.restore(sess,ckpt.model_checkpoint_path)
+                try:
+                    self.players[0].e = 0.01
+                    self.players[1].e = 0.01
+                except:
+                    pass
             # Set session for QPlayer
             self.players[0].setSessionEpisodes(sess,num_episodes)
             self.players[1].setSessionEpisodes(sess,num_episodes)
@@ -91,7 +97,7 @@ class Game:
                 if i % 1000 == 0 and i > 0:
                     saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
                     print("Saved Model")
-                    print "Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
+                    print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
                     pause = timeit.default_timer()
                     print "Temps: " + str(pause-start)
 
@@ -99,6 +105,7 @@ class Game:
                     winB += 1
                 elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
                     winW += 1
+            wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
             try:
                 saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
                 print "Model saved on: " + self.gameModel
@@ -107,15 +114,8 @@ class Game:
         print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
         stop = timeit.default_timer()
         print "Temps Final: " + str(stop-start)
-        plt.figure(1)
-        plt.subplot(111)
-        plt.plot([x[0] for x in wins],'*')
-        plt.axis([0, len(wins)-1, 0, 100])
-        plt.show()
-        #plt.subplot(112)
-        #plt.plot([x[1] for x in wins],'*')
-        #plt.axis([1, len(wins)-1, 0, 100])
-        #plt.show()
+        self.pr.saveResults(wins,self.gameModel)
+        return self.gameModel
 
     def gameStart(self, dbGame=[]):
         """ Game engine to run Othello, switch between players and do moves

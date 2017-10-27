@@ -26,7 +26,8 @@ class QPlayer(Player):
 
     def endGame(self):
         """ Update e greedy and game buffer """
-        self.e -= (0.9/self.num_episodes)
+        if self.e > 0.01:
+            self.e -= (0.9/self.num_episodes)
         self.myBuffer.add(self.gameBuffer.buffer)
         self.gameBuffer = ExperienceBuffer()
 
@@ -46,7 +47,13 @@ class QPlayer(Player):
 
         #Get new state and reward from environment and update
         sPrime,r,d = s.next(self.tile,action)
-        self.gameBuffer.add(np.reshape(np.array([s.get1DBoard(),action,r,sPrime.get1DBoard(),d]),[1,5]))
+        if self.QN.getInputShape() == 64:
+            sBoard = s.get1DBoard()
+            sPrimeBoard = sPrime.get1DBoard()
+        else:
+            sBoard = s.get129Board(self.tile)
+            sPrimeBoard = sPrime.get129Board(self.tile)
+        self.gameBuffer.add(np.reshape(np.array([sBoard,action,r,sPrimeBoard,d]),[1,5]))
         if total_steps > self.pre_train_steps and total_steps % 5 == 0:
             self.QN.update(self.myBuffer,self.sess)
         return action

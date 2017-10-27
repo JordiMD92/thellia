@@ -1,4 +1,5 @@
 import os
+
 class ConsoleView:
 
     def getGameMode(self,game):

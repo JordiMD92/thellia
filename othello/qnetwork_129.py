@@ -29,6 +29,9 @@ class QNetwork129(object):
         trainer = tf.train.GradientDescentOptimizer(lr)
         self.updateModel = trainer.minimize(self.loss)
 
+    def getInputShape(self):
+        return 129
+
     def getQout(self,s,tile,sess):
         """ Return Q-values for the QPlayer
         @param board s

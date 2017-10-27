@@ -26,7 +26,7 @@ class Board(object):
         """ Returns actual state of board in 1 Dimension"""
         return self.board.reshape((64))
 
-    def get128Board(self,tile):
+    def get129Board(self,tile):
         """ Returns actual state of board in 1 Dimension of 128 positions,
         half for black pieces positions, other half for white positions """
         oneD = self.get1DBoard()
