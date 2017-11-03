@@ -6,10 +6,10 @@ class Board(object):
 
     def __init__(self):
         self.board = numpy.zeros((8,8), int)
-        self.board[3][3] = Board.BLACK
-        self.board[4][4] = Board.BLACK
-        self.board[3][4] = Board.WHITE
-        self.board[4][3] = Board.WHITE
+        self.board[3][3] = Board.WHITE
+        self.board[4][4] = Board.WHITE
+        self.board[3][4] = Board.BLACK
+        self.board[4][3] = Board.BLACK
 
         self.remaining_pieces = 8*8-4
         self.score = {Board.BLACK: 2, Board.WHITE: 2}
@@ -26,6 +26,25 @@ class Board(object):
         """ Returns actual state of board in 1 Dimension"""
         return self.board.reshape((64))
 
+    def get129Board(self,tile):
+        """ Returns actual state of board in 1 Dimension of 128 positions,
+        half for black pieces positions, other half for white positions """
+        oneD = self.get1DBoard()
+        shapedBoard = numpy.zeros(129,int)
+        idx = 0
+        for pos in oneD:
+            if pos == 0:
+                shapedBoard[idx] = 0
+                shapedBoard[idx+64] = 0
+            elif pos == self.BLACK:
+                shapedBoard[idx] = 1
+            else:
+                shapedBoard[idx+64] = 1
+            idx += 1
+
+        shapedBoard[128] = (1+tile)/2
+        return shapedBoard
+
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=7) and (r>=0) and (r<=7)
@@ -33,6 +52,24 @@ class Board(object):
     def getRemainingPieces(self):
         """ Returns remaining pieces """
         return self.remaining_pieces
+
+    def next(self,tile,action):
+        """
+        Update board and return new board and reward
+        @param int tile
+        @param int action
+        @param Board s
+        @return Board,int,bool sPrime,reward,d
+        """
+        self.updateBoard(tile,action)
+        reward = -1
+        d = 0
+        if self.getScore()[tile] > self.getScore()[-tile]:
+            reward = 1
+        if self.getRemainingPieces() == 0:
+            d = 1
+        return self,reward,d
+
 
     def updateBoard(self,tile,move):
         """
