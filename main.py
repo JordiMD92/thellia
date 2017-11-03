@@ -50,7 +50,7 @@ num_episodes = 1
 modelPath = "./models"
 dbPath = "./DB/db"
 view = MinimalView()
-QN = QNetwork129(0.001)
+QN = QNetwork64(0.001)
 pr = ProcessResults()
 
 # Load db games
