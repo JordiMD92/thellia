@@ -1,7 +1,6 @@
 from player import Player
 import numpy as np
 import random
-from othello.experience_replay import ExperienceBuffer
 
 class QPlayer(Player):
 
@@ -9,8 +8,6 @@ class QPlayer(Player):
         Player.__init__(self,tile)
 
         self.QN = QN
-        self.myBuffer = ExperienceBuffer()
-        self.gameBuffer = ExperienceBuffer()
         self.e = 1
         self.sess = None
         self.num_episodes = 1
@@ -28,8 +25,6 @@ class QPlayer(Player):
         """ Update e greedy and game buffer """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
-        self.myBuffer.add(self.gameBuffer.buffer)
-        self.gameBuffer = ExperienceBuffer()
 
     def getMove(self,s,possibleMoves,total_steps):
         """ Get the player's move
@@ -38,11 +33,11 @@ class QPlayer(Player):
         @param int total_steps
         @return int action
         """
+        Q = self.QN.getQout(s,self.tile,self.sess)
         #Choose move e-greedyly, random or from network
         if np.random.rand(1) < self.e or total_steps < self.pre_train_steps:
             action = random.choice(possibleMoves)
         else:
-            Q = self.QN.getQout(s,self.tile,self.sess)
             action = self.get_best_possible_action(possibleMoves,Q)
 
         #Get new state and reward from environment and update
@@ -53,9 +48,7 @@ class QPlayer(Player):
         else:
             sBoard = s.get129Board(self.tile)
             sPrimeBoard = sPrime.get129Board(self.tile)
-        self.gameBuffer.add(np.reshape(np.array([sBoard,action,r,sPrimeBoard,d]),[1,5]))
-        if total_steps > self.pre_train_steps and total_steps % 5 == 0:
-            self.QN.update(self.myBuffer,self.sess)
+        self.QN.update(Q,sBoard,action,r,sPrimeBoard,self.sess)
         return action
 
     def get_best_possible_action(self,possible_moves,moves):

@@ -11,6 +11,8 @@ from othello.qnetwork_129 import QNetwork129
 from othello.qnetwork_relu import QNetworkRelu
 from othello.process_results import ProcessResults
 
+""" page 105-145, 229-313, 439-473 | 40+84+34 = 158 """
+
 def gameMode(game):
     gameMode = view.getGameMode(game)
     if gameMode == game.GameMode['hvh']:
@@ -50,7 +52,7 @@ num_episodes = 1
 modelPath = "./models"
 dbPath = "./DB/db"
 view = MinimalView()
-QN = QNetwork64(0.001)
+QN = QNetworkRelu(0.001)
 pr = ProcessResults()
 
 # Load db games
