@@ -11,6 +11,9 @@ from othello.qnetwork_129 import QNetwork129
 from othello.qnetwork_relu import QNetworkRelu
 from othello.process_results import ProcessResults
 
+""" page 105-145, 229-313, 439-473 | 40+84+34 = 158
+lr <- grid search """
+
 def gameMode(game):
     gameMode = view.getGameMode(game)
     if gameMode == game.GameMode['hvh']:
@@ -25,20 +28,20 @@ def gameMode(game):
         return RandomPlayer(1), RandomPlayer(-1)
     elif gameMode == game.GameMode['qvq']:
         #DQN vs DQN
-        return QPlayer(1,QN), QPlayer(-1,QN)
+        return QPlayer(1,QN,targetQN), QPlayer(-1,QN,targetQN)
     elif gameMode == game.GameMode['qvh']:
         #DQN vs Human
-        return QPlayer(1,QN), HumanPlayer(-1,view)
+        return QPlayer(1,QN,targetQN), HumanPlayer(-1,view)
     elif gameMode == game.GameMode['qvr']:
         #DQN vs Random
-        return QPlayer(1,QN), RandomPlayer(-1)
+        return QPlayer(1,QN,targetQN), RandomPlayer(-1)
 
 def loadDB(dbPath,view,modelPath):
     # Load DB to memory
     num_games = view.loadGames()
     if num_games:
         dbGame = Game(MinimalView(),modelPath)
-        dbGame.addPlayers(QPlayer(1,QN),QPlayer(-1,QN))
+        dbGame.addPlayers(QPlayer(1,QN,targetQN),QPlayer(-1,QN,targetQN))
         dbModel = dbGame.loadGames(dbPath,num_games)
         print "DB saved on: " + dbModel
 
@@ -51,6 +54,7 @@ modelPath = "./models"
 dbPath = "./DB/db"
 view = MinimalView()
 QN = QNetwork64(0.001)
+targetQN = QNetwork64(0.001)
 pr = ProcessResults()
 
 # Load db games
