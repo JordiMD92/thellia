@@ -58,9 +58,9 @@ class QPlayer(Player):
         @param list(int) moves
         @return int move
         """
-        sorted_moves = [(val,i) for i,val in enumerate(possible_moves)]
+        sorted_moves = [(val,i) for i,val in enumerate(moves[0])]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
         for move in sorted_moves:
-            if move[0] in possible_moves:
-                return move[0]
+            if move[1] in possible_moves:
+                return move[1]
         return -1
