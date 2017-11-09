@@ -51,7 +51,11 @@ class QPlayer(Player):
         @return int action
         """
         #Choose move e-greedyly, random or from network
-        Qout = self.sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[s.get1DBoard()]})
+        if self.mainQN.getInputShape() == 64:
+            boardShape = s.get1DBoard()
+        else:
+            boardShape = s.get129Board(self.tile)
+        Qout = self.sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[boardShape]})
         if np.random.rand(1) < self.e or total_steps < self.pre_train_steps:
             action = random.choice(possibleMoves)
         else:
@@ -86,9 +90,9 @@ class QPlayer(Player):
         @param list(int) moves
         @return int move
         """
-        sorted_moves = [(val,i) for i,val in enumerate(possible_moves)]
+        sorted_moves = [(val,i) for i,val in enumerate(moves[0])]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
         for move in sorted_moves:
-            if move[0] in possible_moves:
-                return move[0]
+            if move[1] in possible_moves:
+                return move[1]
         return -1
