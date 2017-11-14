@@ -102,7 +102,7 @@ mode = view.getMode()
 # ASk if want to load saved model
 model = view.loadModel(modelPath)
 
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     sess.run(init)
 
     if model:
