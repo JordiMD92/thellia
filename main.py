@@ -44,8 +44,8 @@ def loadDB(modelPath,model,sess):
     # Get num_episodes to load
     num_games = view.getNumEpisodes(True)
     if num_games:
-        p1 = QPlayer(1,QN,"load",num_games,sess,trainables)
-        p2 = QPlayer(-1,QN,"load",num_games,sess,trainables)
+        p1 = QPlayer(1,QN,"load",num_games,sess)
+        p2 = QPlayer(-1,QN,"load",num_games,sess)
         dbGame = Game(MinimalView(),p1,p2,modelPath,sess)
         dbModel = dbGame.loadGames(dbPath,num_games)
         saver.save(sess,dbModel+'/model-'+str(num_games)+'.ckpt')
