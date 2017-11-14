@@ -22,28 +22,32 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
-    def get1DBoard(self):
-        """ Returns actual state of board in 1 Dimension"""
-        return self.board.reshape((64))
+    def getBoardShape(self,num_positions,tile):
+        """ Returns actual state of board in 1 Dimension of #input positions
+        @param int num_positions
+        @param int tile
+        @return list(int) shapedBoard
+        """
+        oneD = self.board.reshape((64))
+        if num_positions == 64:
+            # vector of 64 positions
+            return oneD
+        if num_positions == 129:
+            # Half for black pieces positions, other half for white positions, last position = tile
+            shapedBoard = numpy.zeros(129,int)
+            idx = 0
+            for pos in oneD:
+                if pos == 0:
+                    shapedBoard[idx] = 0
+                    shapedBoard[idx+64] = 0
+                elif pos == self.BLACK:
+                    shapedBoard[idx] = 1
+                else:
+                    shapedBoard[idx+64] = 1
+                idx += 1
 
-    def get129Board(self,tile):
-        """ Returns actual state of board in 1 Dimension of 128 positions,
-        half for black pieces positions, other half for white positions """
-        oneD = self.get1DBoard()
-        shapedBoard = numpy.zeros(129,int)
-        idx = 0
-        for pos in oneD:
-            if pos == 0:
-                shapedBoard[idx] = 0
-                shapedBoard[idx+64] = 0
-            elif pos == self.BLACK:
-                shapedBoard[idx] = 1
-            else:
-                shapedBoard[idx+64] = 1
-            idx += 1
-
-        shapedBoard[128] = (1+tile)/2
-        return shapedBoard
+            shapedBoard[128] = (1+tile)/2
+            return shapedBoard
 
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
@@ -58,16 +62,16 @@ class Board(object):
         Update board and return new board and reward
         @param int tile
         @param int action
-        @param Board s
         @return Board,int,bool sPrime,reward,d
         """
         self.updateBoard(tile,action)
-        reward = -1
+        reward = 0
         d = 0
-        if self.getScore()[tile] > self.getScore()[-tile]:
-            reward = 1
-        if self.getRemainingPieces() == 0:
+        if self.remaining_pieces == 0:
             d = 1
+            reward = -1
+            if self.getScore()[tile] > self.getScore()[-tile]:
+                reward = 1
         return self,reward,d
 
 

@@ -7,7 +7,7 @@ import numpy as np
 64:200:190:180...:64 RELU
 """
 class QNetworkRelu(object):
-    def __init__(self,lr=0.01):
+    def __init__(self,lr=0.001):
         #These lines establish the feed-forward part of the network used to choose actions
         self.inputLayer = tf.placeholder(shape=[None,64],dtype=tf.float32)
         hidden = tf.layers.dense(self.inputLayer, 200, activation = tf.nn.relu)

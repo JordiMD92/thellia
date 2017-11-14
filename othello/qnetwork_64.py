@@ -7,7 +7,7 @@ import numpy as np
 64:200:150:100:64       Sigmoide
 """
 class QNetwork64(object):
-    def __init__(self,lr=0.01):
+    def __init__(self,lr=0.05):
         #These lines establish the feed-forward part of the network used to choose actions
         self.inputLayer = tf.placeholder(shape=[None,64],dtype=tf.float32)
         hidden = tf.layers.dense(self.inputLayer, 200, activation = tf.nn.sigmoid)
