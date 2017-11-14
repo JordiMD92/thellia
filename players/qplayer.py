@@ -4,56 +4,50 @@ import random
 
 class QPlayer(Player):
 
-    def __init__(self,tile,QN):
+    def __init__(self,tile,QN,train,num_episodes,sess):
         Player.__init__(self,tile)
-
         self.QN = QN
-        self.e = 1
-        self.sess = None
-        self.num_episodes = 1
-        self.pre_train_steps = 25
-
-    def setSessionEpisodes(self,sess,num_episodes):
-        """ Update player tf session
-        @param tfSession sess
-        """
-        self.sess = sess
+        self.train = train
         self.num_episodes = num_episodes
-        self.pre_train_steps = num_episodes * 25
+        self.sess = sess
+        self.e = 1
+        if not train or train == "load":
+            self.e = -1
+        self.y = 0.99
 
-    def endGame(self):
-        """ Update e greedy and game buffer """
+    def updateEpsilon(self):
+        """ Update e greedy """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,s,possibleMoves,total_steps):
+    def getMove(self,s,possibleMoves):
         """ Get the player's move
         @param board s
         @param list(int) possibleMoves
-        @param int total_steps
         @return int action
         """
-        Q = self.QN.getQout(s,self.tile,self.sess)
+        boardShape = s.getBoardShape(self.QN.getInputShape(),self.tile)
+        Qout = self.sess.run(self.QN.Qout,feed_dict={self.QN.inputLayer:[boardShape]})
         #Choose move e-greedyly, random or from network
-        if np.random.rand(1) < self.e or total_steps < self.pre_train_steps:
+        if np.random.rand(1) < self.e:
             action = random.choice(possibleMoves)
         else:
-            action = self.get_best_possible_action(possibleMoves,Q)
-
-        #Get new state and reward from environment and update
-        sPrime,r,d = s.next(self.tile,action)
-        if self.QN.getInputShape() == 64:
-            sBoard = s.get1DBoard()
-            sPrimeBoard = sPrime.get1DBoard()
-        else:
-            sBoard = s.get129Board(self.tile)
-            sPrimeBoard = sPrime.get129Board(self.tile)
-        self.QN.update(Q,sBoard,action,r,sPrimeBoard,self.sess)
+            action = self.get_best_possible_action(possibleMoves,Qout)
+        if self.train:
+            #Get new state and reward from environment and update
+            sPrime,r = s.next(self.tile,action)
+            sPrimeBoardShape = sPrime.getBoardShape(self.QN.getInputShape(),self.tile)
+            # Get predictions from next state and update NN with best prediction and reward
+            Q1 = self.sess.run(self.QN.Qout,feed_dict={self.QN.inputLayer:np.identity(self.QN.getInputShape())[sPrimeBoardShape]})
+            maxQ1 = np.max(Q1)
+            targetQ = Qout
+            targetQ[0,action] = r + self.y*maxQ1
+            _ = self.sess.run(self.QN.updateModel,feed_dict={self.QN.inputLayer:np.identity(self.QN.getInputShape())[boardShape],self.QN.nextQ:targetQ})
         return action
 
     def get_best_possible_action(self,possible_moves,moves):
         """
-        Get the bes possible move from a list
+        Get the best possible move from a list
         @param list(int) possible_moves
         @param list(int) moves
         @return int move

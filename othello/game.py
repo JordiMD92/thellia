@@ -1,20 +1,20 @@
 from __future__ import division
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import timeit
 import time
-import tensorflow as tf
 import board
+from players.randomplayer import RandomPlayer
 from othello.process_results import ProcessResults
 
 class Game:
-    GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
 
-    def __init__(self, view, path):
+    def __init__(self, view, p1, p2, path, sess):
         self.view = view
-        self.players = []
+        self.p1 = p1
+        self.p2 = p2
+        self.path = path
+        self.sess = sess
         self.board = board.Board()
-        self.total_steps = 0
         self.pr = ProcessResults()
 
         self.gameModel = path+"/"+time.strftime("%Y-%m-%d_%H:%M:%S")
@@ -22,20 +22,11 @@ class Game:
         if not os.path.exists(self.gameModel):
             os.makedirs(self.gameModel)
 
-    def addPlayers(self, p1, p2):
-        """ Add players to the game
-        @param Player p1
-        @param Player p2
-        """
-        self.players = []
-        self.players.append(p1)
-        self.players.append(p2)
-
     def getPlayers(self):
         """ Return players
         @return Player,Player
         """
-        return self.players[0],self.players[1]
+        return self.p1,self.p2
 
     def getScore(self):
         """ Get game score
@@ -47,96 +38,26 @@ class Game:
         """ Reset environment """
         self.board = board.Board()
 
-    def setView(self, view):
-        """ Set new view to Game
-        @param View view
-        """
-        self.view = view
-
-    def run(self, num_episodes=1, load_model=False, gamesDB=[]):
-        """ Run othello game, run games for especified num_episodes
-        @param int num_episode
-        @param list(list(int)) gamesDB
-        """
-        start = timeit.default_timer()
-        winB = winW = 0
-        wins = []
-        init = tf.global_variables_initializer()
-        try:
-            saver = tf.train.Saver()
-        except:
-            pass
-        with tf.Session() as sess:
-            sess.run(init)
-
-            if load_model:
-                print "Loading Model: "+load_model
-                ckpt = tf.train.get_checkpoint_state(load_model)
-                saver.restore(sess,ckpt.model_checkpoint_path)
-                try:
-                    self.players[0].e = 0.01
-                    self.players[1].e = 0.01
-                except:
-                    pass
-            # Set session for QPlayer
-            self.players[0].setSessionEpisodes(sess,num_episodes)
-            self.players[1].setSessionEpisodes(sess,num_episodes)
-
-            for i in range(num_episodes):
-                dbGame = []
-                if gamesDB:
-                    dbGame = gamesDB[i]
-                self.reset()
-                self.gameStart(dbGame)
-                # Update buffers and e for QPlayer
-                self.players[0].endGame()
-                self.players[1].endGame()
-
-                if i % 100 == 0 and i > 0:
-                    wins.append(((winB/i*100),(winW/i*100)))
-                if i % 1000 == 0 and i > 0:
-                    saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
-                    print("Saved Model")
-                    print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
-                    pause = timeit.default_timer()
-                    print "Temps: " + str(pause-start)
-
-                if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
-                    winB += 1
-                elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
-                    winW += 1
-            wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
-            try:
-                saver.save(sess,self.gameModel+'/model-'+str(i)+'.ckpt')
-                print "Model saved on: " + self.gameModel
-            except:
-                pass
-        print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
-        stop = timeit.default_timer()
-        print "Temps Final: " + str(stop-start)
-        self.pr.saveResults(wins,self.gameModel)
-        return self.gameModel
-
     def gameStart(self, dbGame=[]):
-        """ Game engine to run Othello, switch between players and do moves
-        @param list(int) actualGame
+        """ Game engine to play Othello, switch between players and do moves
+        @param list(int) dbGame
         """
         # Get black player, first to move
-        if self.players[0].getTile() == self.board.BLACK:
-            black = self.players[0]
-            white = self.players[1]
+        if self.p1.getTile() == self.board.BLACK:
+            black = self.p1
+            white = self.p2
         else:
-            black = self.players[1]
-            white = self.players[0]
+            black = self.p2
+            white = self.p1
         actualTurnPlayer = black
+        # Reset board
+        self.reset()
         passCount = 0
         while self.board.getRemainingPieces() > 0 and passCount < 2:
             # Play if there are pieces and can do a move
-            self.view.printState(self.board)
-            self.view.printTurn(self.board, actualTurnPlayer.getTile())
             possibleMoves = actualTurnPlayer.checkMoves(self.board)
             if possibleMoves:
-                # If there are move, play
+                # If there is a move, play
                 passCount = 0
                 if dbGame:
                     try:
@@ -145,17 +66,101 @@ class Game:
                     except:
                         break
                 #Get player move and update board
-                move = actualTurnPlayer.getMove(self.board, possibleMoves, self.total_steps)
+                move = actualTurnPlayer.getMove(self.board, possibleMoves)
                 self.board.updateBoard(actualTurnPlayer.getTile(), move)
-                self.total_steps += 1
             else:
-                #If there aren't moves, switch player
+                #If there aren't moves, pass
                 passCount += 1
-                self.view.printCannotMove()
             actualTurnPlayer = white if actualTurnPlayer is black else black
 
-        self.view.printState(self.board)
-        self.view.printEndGame()
+    def train(self, num_episodes=100, gamesDB=[]):
+        """ Train othello game, run games for especified num_episodes
+        @param int num_episodes
+        @param list(list(int)) gamesDB
+        @return String gameModel
+        """
+        start = timeit.default_timer()
+        wins = []
+
+        # Train #num_episodes
+        for i in range(num_episodes):
+            dbGame = []
+            if gamesDB:
+                dbGame = gamesDB[i]
+            self.gameStart(dbGame)
+            # Update e for QPlayer
+            self.p1.updateEpsilon()
+            self.p2.updateEpsilon()
+
+            # Save wins and show time
+            if i % 1000 == 0 and i > 0:
+                pause = timeit.default_timer()
+                print "Temps: " + str(pause-start)
+                winB,winW = self.playRandomBatch()
+                wins.append(((winB),(winW)))
+
+        # Save wins and show time
+        winB,winW = self.playRandomBatch()
+        wins.append(((winB),(winW)))
+        stop = timeit.default_timer()
+        print "Temps Final: " + str(stop-start)
+        self.pr.saveResults(wins,self.gameModel)
+        return self.gameModel
+
+    def play(self,num_episodes=100):
+        """ Play othello game, run games for especified num_episodes
+        @param int num_episode
+        @return String gameModel
+        """
+        start = timeit.default_timer()
+        winB = winW = 0
+        wins = []
+
+        # Play #num_episodes
+        for i in range(num_episodes):
+            self.gameStart()
+
+            # Save wins and show time
+            if i % 100 == 0 and i > 0:
+                wins.append(((winB/i*100),(winW/i*100)))
+            if i % 1000 == 0 and i > 0:
+                print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
+                pause = timeit.default_timer()
+                print "Temps: " + str(pause-start)
+
+            if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
+                winB += 1
+            elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
+                winW += 1
+        # Save wins and show time
+        wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
+        stop = timeit.default_timer()
+        print "Temps Final: " + str(stop-start)
+        print "Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
+        print "----------------------------------------"
+        self.pr.saveResults(wins,self.gameModel)
+        return self.gameModel
+
+    def playRandomBatch(self):
+        """ Play 100 Random games versus AI """
+        print "-- Percentage batch 100 Random games --"
+        tempP1 = self.p1
+        tempP2 = self.p2
+        self.p2 = RandomPlayer(-1)
+        winB = winW = 0
+
+        for i in range(100):
+            self.gameStart()
+
+            if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
+                winB += 1
+            elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
+                winW += 1
+        print "Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
+        print "----------------------------------------"
+        self.p1 = tempP1
+        self.p2 = tempP2
+        return winB,winW
 
     def loadGames(self, path, load_episodes):
         """ Load professional saved games
@@ -182,5 +187,5 @@ class Game:
                         preChar = char
                     i += 1
                 newLines.append(newLine)
-            self.run(load_episodes,False,newLines)
+            self.train(load_episodes,newLines)
             return self.gameModel

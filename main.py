@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
 from othello.game import Game
 from views.consoleview import ConsoleView
 from views.minimalview import MinimalView
@@ -11,67 +13,105 @@ from othello.qnetwork_129 import QNetwork129
 from othello.qnetwork_relu import QNetworkRelu
 from othello.process_results import ProcessResults
 
-""" page 105-145, 229-313, 439-473 | 40+84+34 = 158 """
+""" page 105-145, 229-313, 439-473 | 40+84+34 = 158
+lr <- grid search """
 
-def gameMode(game):
-    gameMode = view.getGameMode(game)
-    if gameMode == game.GameMode['hvh']:
+def gameMode(num_episodes,train,sess):
+    gameMode = view.getGameMode(GameMode)
+    if gameMode == GameMode['hvh']:
         #Human vs Human
         return HumanPlayer(1,view),HumanPlayer(-1,view)
-    elif gameMode == game.GameMode['hvr']:
+    elif gameMode == GameMode['hvr']:
         #Human vs Random, ask tile and create players
         playerTile = view.getHumanTile()
         return HumanPlayer(playerTile,view), RandomPlayer(-playerTile)
-    elif gameMode == game.GameMode['rvr']:
+    elif gameMode == GameMode['rvr']:
         #Random vs Random
         return RandomPlayer(1), RandomPlayer(-1)
-    elif gameMode == game.GameMode['qvq']:
+    elif gameMode == GameMode['qvq']:
         #DQN vs DQN
-        return QPlayer(1,QN), QPlayer(-1,QN)
-    elif gameMode == game.GameMode['qvh']:
+        return QPlayer(1,QN,train,num_episodes,sess), QPlayer(-1,QN,train,num_episodes,sess)
+    elif gameMode == GameMode['qvh']:
         #DQN vs Human
-        return QPlayer(1,QN), HumanPlayer(-1,view)
-    elif gameMode == game.GameMode['qvr']:
+        return QPlayer(1,QN,train,num_episodes,sess), HumanPlayer(-1,view)
+    elif gameMode == GameMode['qvr']:
         #DQN vs Random
-        return QPlayer(1,QN), RandomPlayer(-1)
+        return QPlayer(1,QN,train,num_episodes,sess), RandomPlayer(-1)
 
-def loadDB(dbPath,view,modelPath):
+def loadDB(modelPath,model,sess):
     # Load DB to memory
-    num_games = view.loadGames()
+    dbPath = "./DB/db"
+    # Get num_episodes to load
+    num_games = view.getNumEpisodes(True)
     if num_games:
-        dbGame = Game(MinimalView(),modelPath)
-        dbGame.addPlayers(QPlayer(1,QN),QPlayer(-1,QN))
+        p1 = QPlayer(1,QN,"load",num_games,sess,trainables)
+        p2 = QPlayer(-1,QN,"load",num_games,sess,trainables)
+        dbGame = Game(MinimalView(),p1,p2,modelPath,sess)
         dbModel = dbGame.loadGames(dbPath,num_games)
-        print "DB saved on: " + dbModel
+        saver.save(sess,dbModel+'/model-'+str(num_games)+'.ckpt')
+        renameFolder(modelPath,dbModel)
 
-def loadModel(modelPath):
-    return view.loadModel(modelPath)
+def train(view,modelPath,sess):
+    # Get num_episodes to train
+    num_episodes = view.getNumEpisodes()
+    # Create game and add players
+    p1,p2 = gameMode(num_episodes,True,sess)
+    game = Game(view,p1,p2,modelPath,sess)
+    print "Game Running..."
+    end_model = game.train(num_episodes)
+    saver.save(sess,end_model+'/model-'+str(num_episodes)+'.ckpt')
+    renamed_model = renameFolder(modelPath,end_model)
+    pr.printPlot(renamed_model)
+
+def play(view,modelPath,sess):
+    # Get num_episodes to play
+    num_episodes = view.getNumEpisodes()
+    # Create game and add players
+    p1,p2 = gameMode(num_episodes,False,sess)
+    game = Game(view,p1,p2,modelPath,sess)
+    print "Game Running..."
+    end_model = game.play(num_episodes)
+    renamed_model = renameFolder(modelPath,end_model)
+    pr.printPlot(renamed_model)
+
+def renameFolder(modelPath, model):
+    new_name = ""
+    while not new_name:
+        new_name = raw_input("Type a name for this model: ")
+        #TODO check directory doesn't exist
+    os.rename(model,os.path.join(modelPath,new_name))
+    return modelPath+"/"+new_name
 
 # Use view and initalize game and QNetwork
+GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
 num_episodes = 1
 modelPath = "./models"
-dbPath = "./DB/db"
 view = MinimalView()
-QN = QNetwork64(0.001)
 pr = ProcessResults()
+QN = QNetwork64()
 
-# Load db games
-loadDB(dbPath,view,modelPath)
+# Initialize Session
+init = tf.global_variables_initializer()
+saver = tf.train.Saver()
 
-# Create game and add players
-game = Game(view,modelPath)
-p1,p2 = gameMode(game)
-game.addPlayers(p1,p2)
-
+#Ask what mode want to run 'loadDB, train or play'
+mode = view.getMode()
 # ASk if want to load saved model
-model = loadModel(modelPath)
+model = view.loadModel(modelPath)
 
-# Get num_episodes to train
-num_episodes = view.getTrainEpisodes()
+with tf.Session() as sess:
+    sess.run(init)
 
-#Run game
-if num_episodes > 0:
-    print "Game Running..."
-    end_model = game.run(num_episodes,model)
-    pr.printPlot(end_model)
+    if model:
+        print "Loading Model: "+model
+        ckpt = tf.train.get_checkpoint_state(model)
+        saver.restore(sess,ckpt.model_checkpoint_path)
+
+    if mode == "load":
+        loadDB(modelPath,model,sess)
+    elif mode == "train":
+        train(view,modelPath,sess)
+    elif mode == "play":
+        play(view,modelPath,sess)
+
 print "Application finalized"
