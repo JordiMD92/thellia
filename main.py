@@ -88,7 +88,7 @@ num_episodes = 1
 modelPath = "./models"
 view = MinimalView()
 pr = ProcessResults()
-QN = QNetwork64()
+QN = QNetworkRelu()
 
 # Initialize Session
 init = tf.global_variables_initializer()
@@ -99,7 +99,8 @@ mode = view.getMode()
 # ASk if want to load saved model
 model = view.loadModel(modelPath)
 
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+#with tf.Session() as sess:
     sess.run(init)
 
     if model:

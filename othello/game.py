@@ -92,6 +92,8 @@ class Game:
             self.p1.updateEpsilon()
             self.p2.updateEpsilon()
 
+            if i % 100 == 0 and i > 0:
+                print "{"+str(i)+" - "+str(num_episodes)+"}"
             # Save wins and show time
             if i % 1000 == 0 and i > 0:
                 pause = timeit.default_timer()
@@ -123,6 +125,8 @@ class Game:
             # Save wins and show time
             if i % 100 == 0 and i > 0:
                 wins.append(((winB/i*100),(winW/i*100)))
+                print "{"+str(i)+" - "+str(num_episodes)+"}"
+                print wins
             if i % 1000 == 0 and i > 0:
                 print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
                 pause = timeit.default_timer()
@@ -136,7 +140,7 @@ class Game:
         wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
         stop = timeit.default_timer()
         print "Temps Final: " + str(stop-start)
-        print "Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
+        print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
         print "----------------------------------------"
         self.pr.saveResults(wins,self.gameModel)
         return self.gameModel
