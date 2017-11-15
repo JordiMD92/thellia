@@ -102,7 +102,8 @@ mode = view.getMode()
 # ASk if want to load saved model
 model = view.loadModel(modelPath)
 
-with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+#with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+with tf.Session() as sess:
     sess.run(init)
 
     if model:
@@ -111,7 +112,6 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         saver.restore(sess,ckpt.model_checkpoint_path)
 
     if mode == "load":
-        # Load db games
         loadDB(modelPath,model,sess)
     elif mode == "train":
         train(view,modelPath,sess)
