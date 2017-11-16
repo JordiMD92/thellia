@@ -1,19 +1,18 @@
 import os
 class MinimalView:
 
-    def getGameMode(self,game):
-        print("Welcome to Thellia")
+    def getGameMode(self,gameMode):
         print("Choose a game mode:")
-        print(str(game.GameMode['hvh'])+") Human vs Human")
-        print(str(game.GameMode['hvr'])+") Human vs Random Computer")
-        print(str(game.GameMode['rvr'])+") Random Computer vs Random Computer")
-        print(str(game.GameMode['qvq'])+") DQN AI vs DQN AI")
-        print(str(game.GameMode['qvh'])+") DQN AI vs Human")
-        print(str(game.GameMode['qvr'])+") DQN AI vs Random Computer")
+        print(str(gameMode['hvh'])+") Human vs Human")
+        print(str(gameMode['hvr'])+") Human vs Random Computer")
+        print(str(gameMode['rvr'])+") Random Computer vs Random Computer")
+        print(str(gameMode['qvq'])+") DQN AI vs DQN AI")
+        print(str(gameMode['qvh'])+") DQN AI vs Human")
+        print(str(gameMode['qvr'])+") DQN AI vs Random Computer")
         while True:
-            gameMode = int(input("Please choose: "))
-            if gameMode >= 1 and gameMode <= len(game.GameMode):
-                return gameMode
+            mode = int(input("Please choose: "))
+            if mode >= 1 and mode <= len(gameMode):
+                return mode
             else:
                 print("Invalid option, try again")
 
@@ -41,11 +40,16 @@ class MinimalView:
                 print("Invalid move, try again")
         return
 
-    def getTrainEpisodes(self):
-        """ Ask if the IA will train """
-        print("Do you want to train the IA?")
+    def getNumEpisodes(self,db=False):
+        """ Ask how much the IA will play """
+        print("How many games do you want to run?")
         while True:
-            num_episodes = raw_input("Type number iterations to train, [0] to not train: ")
+            if db:
+                num_episodes = raw_input("Type number games to load, [0] to not load or \"all\" to load all db: ")
+                if num_episodes == "all":
+                    return num_episodes
+            else:
+                num_episodes = raw_input("Type number iterations to run, [0] to not play: ")
             try:
                 if int(num_episodes) >= 0:
                     return int(num_episodes)
@@ -54,16 +58,14 @@ class MinimalView:
                 print("Invalid input, try again")
         return
 
-    def loadGames(self):
-        """ Ask if want to load human games """
-        print("Do you want to load games from DB?")
+    def getMode(self):
+        """ Ask which mode want to run """
+        print("What mode want to run?")
         while True:
-            load_episodes = raw_input("Type [0] not load, > 0 to load, [all] to load all: ")
-            if load_episodes == "all":
-                return load_episodes
+            mode = raw_input("Type \"load\" to load DB, \"train\" to train AI, \"play\" to play: ")
             try:
-                if int(load_episodes) >= 0:
-                    return int(load_episodes)
+                if mode == "load" or mode == "train" or mode == "play":
+                    return mode
                 print("Invalid input, try again")
             except:
                 print("Invalid input, try again")
