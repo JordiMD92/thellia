@@ -3,10 +3,10 @@ from player import Player
 class HumanPlayer(Player):
 
     def __init__(self,tile,view):
-        Player.__init__(self,tile)
+        Player.__init__(self,tile=tile,pType="HP")
         self.view = view
 
-    def getMove(self,board,possibleMoves,total_steps):
+    def getMove(self,board,possibleMoves):
         """
         Get the player's move
         @param board board

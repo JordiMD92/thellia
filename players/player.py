@@ -1,16 +1,25 @@
 class Player:
-
-    def __init__(self,tile):
+    def __init__(self,tile,pType):
         self.tile = tile
+        self.pType = pType
 
-    def setSessionEpisodes(self,sess=None,num_episodes=1):
-        """ Update player tf session
+    def updateEpsilon(self):
+        """ Update e greedy """
+        pass
+
+    def getMove(self,s,possibleMoves):
+        """ Get the player's move
+        @param board s
+        @param list(int) possibleMoves
+        @return int action
         """
         pass
 
-    def endGame(self):
-        """ Update e greedy and game buffer """
-        pass
+    def getType(self):
+        """ Returns players type
+        @return string pType
+        """
+        return self.pType
 
     def getScore(self,board):
         """ Returns actual player score
@@ -33,7 +42,6 @@ class Player:
             list of posible moves in 1 dimension format
         """
         possibleMoves = []
-
         for c in xrange(0,8):
             for r in xrange(0,8):
                 if board.isValidMove(self.tile,c,r):

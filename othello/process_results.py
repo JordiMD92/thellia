@@ -6,8 +6,8 @@ class ProcessResults():
     def __init__(self):
         self.fn = "/results"
 
-    def saveResults(self,results,model):
-        with open(model+self.fn,'w') as f:
+    def saveResults(self,results,model_path):
+        with open(model_path+self.fn,'w') as f:
             winsB = []
             winsW = []
             for elem in results:

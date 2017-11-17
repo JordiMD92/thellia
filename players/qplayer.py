@@ -5,9 +5,9 @@ import random
 class QPlayer(Player):
 
     def __init__(self,tile,QN,train,num_episodes):
-        Player.__init__(self,tile)
+        Player.__init__(self,tile=tile,pType="QP")
         self.QN = QN
-        self.model = self.QN.get_model()
+        self.model = self.QN.getModel()
         self.train = train
         self.num_episodes = num_episodes
         self.e = 1
@@ -16,7 +16,6 @@ class QPlayer(Player):
         if QN.isModelLoaded():
             self.e = 0.1
         self.y = 0.99
-        self.conta = 0
 
     def updateEpsilon(self):
         """ Update e greedy """
@@ -46,8 +45,6 @@ class QPlayer(Player):
             targetQ = Qout
             targetQ[0,action] = r + self.y*maxQ1
             self.model.fit(Qout,targetQ,epochs=1,verbose=0)
-
-            self.conta += 1
         return action
 
     def get_best_possible_action(self,possible_moves,moves):

@@ -1,108 +1,177 @@
 #!/usr/bin/env python
-import os
+import os, sys, getopt, errno
 from othello.game import Game
-from views.consoleview import ConsoleView
 from views.minimalview import MinimalView
 from players.humanplayer import HumanPlayer
 from players.randomplayer import RandomPlayer
 from players.qplayer import QPlayer
-from othello.qnetwork_64 import QNetwork64
-from othello.qnetwork_129 import QNetwork129
-from othello.qnetwork_relu import QNetworkRelu
+from networks.qnetwork_sigmoid import QNetworkSigmoid
+from networks.qnetwork_relu import QNetworkRelu
 from othello.process_results import ProcessResults
 
 """ page 105-145, 229-313, 439-473 | 40+84+34 = 158
 lr <- grid search """
 
-def gameMode(num_episodes,train,):
-    gameMode = view.getGameMode(GameMode)
-    if gameMode == GameMode['hvh']:
-        #Human vs Human
-        return HumanPlayer(1,view),HumanPlayer(-1,view)
-    elif gameMode == GameMode['hvr']:
-        #Human vs Random, ask tile and create players
-        playerTile = view.getHumanTile()
-        return HumanPlayer(playerTile,view), RandomPlayer(-playerTile)
-    elif gameMode == GameMode['rvr']:
-        #Random vs Random
-        return RandomPlayer(1), RandomPlayer(-1)
-    elif gameMode == GameMode['qvq']:
-        #DQN vs DQN
-        return QPlayer(1,QN,train,num_episodes), QPlayer(-1,QN,train,num_episodes)
-    elif gameMode == GameMode['qvh']:
-        #DQN vs Human
-        return QPlayer(1,QN,train,num_episodes), HumanPlayer(-1,view)
-    elif gameMode == GameMode['qvr']:
-        #DQN vs Random
-        return QPlayer(1,QN,train,num_episodes), RandomPlayer(-1)
-
-def loadDB(modelPath,model):
-    # Load DB to memory
-    dbPath = "./DB/db"
-    # Get num_episodes to load
-    num_games = view.getNumEpisodes(True)
-    if num_games:
-        p1 = QPlayer(1,QN,"load",num_games)
-        p2 = QPlayer(-1,QN,"load",num_games)
-        dbGame = Game(MinimalView(),p1,p2,modelPath)
-        dbModel = dbGame.loadGames(dbPath,num_games)
-        renamed_model = renameFolder(modelPath,dbModel)
-        return renamed_model
-
-def train(view,modelPath):
-    # Get num_episodes to train
-    num_episodes = view.getNumEpisodes()
-    # Create game and add players
-    p1,p2 = gameMode(num_episodes,True)
-    game = Game(view,p1,p2,modelPath)
-    print "Game Running..."
-    end_model = game.train(num_episodes)
-    renamed_model = renameFolder(modelPath,end_model)
-    return renamed_model
-
-def play(view,modelPath):
-    # Get num_episodes to play
-    num_episodes = view.getNumEpisodes()
-    # Create game and add players
-    p1,p2 = gameMode(num_episodes,False)
-    game = Game(view,p1,p2,modelPath)
-    print "Game Running..."
-    end_model = game.play(num_episodes)
-    renamed_model = renameFolder(modelPath,end_model)
-    return renamed_model
-
-def renameFolder(modelPath, model):
-    new_name = ""
-    while not new_name:
-        new_name = raw_input("Type a name for this model: ")
-        #TODO check directory doesn't exist
-    os.rename(model,os.path.join(modelPath,new_name))
-    return modelPath+"/"+new_name
-
-# Use view and initalize game and QNetwork
-GameMode = {'hvh': 1,'hvr': 2,'rvr': 3,'qvq': 4,'qvh': 5,'qvr': 6}
-num_episodes = 1
-modelPath = "./models"
+model_path = "./models"
+db_path = "./DB/db"
 view = MinimalView()
 pr = ProcessResults()
-QN = QNetworkRelu()
 
-#Ask what mode want to run 'loadDB, train or play'
-mode = view.getMode()
-# ASk if want to load saved model
-model = view.loadModel(modelPath)
+def getArgs(argv):
+    """ Get arguments, check values and parse
+    @return String mode
+    @return int num_episodes
+    @return QNetwork QN
+    @return Player b
+    @return Player w
+    @return String load
+    """
+    num_episodes = 0
+    mode = qn_arg = b_arg = w_arg = load = ""
+    try:
+        opts,args = getopt.getopt(argv,'m:e:n:b:w:l:',['mode=','episodes=','neural_network=','black=','white=','load='])
+    except getopt.GetoptError as err:
+        usage("Bad arguments usage")
+    for opt, arg in opts:
+        if opt in ("-m","--mode"):
+            if arg not in ("play","train","load"):
+                usage(arg+" is not a mode")
+            mode = arg
+        if opt in ("-e","--episodes"):
+            try:
+                if int(arg) >= 1:
+                    num_episodes = int(arg)
+                else:
+                    raise Exception()
+            except Exception as e:
+                print "The number of episodes must be a positive integer"
+        if opt in ("-n","--neural_network"):
+            if arg not in ("relu","sigmoid"):
+                usage(arg+" is not a compatible network")
+            qn_arg = arg
+        if opt in ("-b","--black"):
+            if arg not in ("QP","RP","HP",""):
+                usage(arg+" is not a compatible player")
+            b_arg = arg
+        if opt in ("-w","--white"):
+            if arg not in ("QP","RP","HP",""):
+                usage(arg+" is not a compatible player")
+            w_arg = arg
+        if opt in ("-l","--load"):
+            load = arg
 
-if model:
-    print "Loading Model: "+model
-    QN.load_model(model)
+    if mode == "" or num_episodes == 0 or qn_arg == "":
+        usage("Mode, number of episodes and neural network are needed")
+    if mode in ("play","train") and b_arg == "" and w_arg == "":
+        print "Players are needed to " + mode
+        sys.exit(2)
 
-if mode == "load":
-    folder_model = loadDB(modelPath,model)
-elif mode == "train":
-    folder_model = train(view,modelPath)
-elif mode == "play":
-    folder_model = play(view,modelPath)
+    if qn_arg == "relu":
+        QN = QNetworkRelu()
+    if qn_arg == "sigmoid":
+        QN = QNetworkSigmoid()
 
-QN.save_model(folder_model)
-pr.printPlot(folder_model)
-print "Application finalized"
+    if mode == "load":
+        b = QPlayer(1,QN,mode,num_episodes)
+        w = QPlayer(-1,QN,mode,num_episodes)
+    else:
+        b = HumanPlayer(1,view)
+        if b_arg == "RP":
+            b = RandomPlayer(1)
+        elif b_arg == "QP":
+            b = QPlayer(1,QN,mode,num_episodes)
+        w = HumanPlayer(-1,view)
+        if w_arg == "RP":
+            w = RandomPlayer(-1)
+        elif w_arg == "QP":
+            w = QPlayer(-1,QN,mode,num_episodes)
+
+    try:
+        os.makedirs(model_path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+    if load:
+        if qn_arg not in load:
+            print "That network is not compatible with that model"
+            sys.exit(2)
+        folders = os.walk(model_path).next()[1]
+        if load not in folders:
+            print "You must type a valid folder from models"
+            sys.exit(2)
+        else:
+            QN.loadModel(model_path+"/"+load)
+            print "Model ["+load+"] loaded"
+
+    return mode,num_episodes,QN,b,w,load
+
+def usage(error):
+    """ Print information and exit """
+    print error
+    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -b <player1_type> -w <player2_type> -l <load_model>"
+    print "<mode>: [train/play/load] (train game, play game, or load from db)"
+    print "<neural_network>: [relu,sigmoid]"
+    print "<player_type>: [QP/RP/HP] (QPlayer, RandomPlayer, HumanPlayer)"
+    sys.exit(2)
+
+def getModel_name(mode, num_episodes, QN, b, w, load_model):
+    """ Get model name of the folders
+    @param String mode
+    @param int num_episodes
+    @param QNetwork QN
+    @param Player b
+    @param Player w
+    @param String load_model
+    @return String model_name
+    """
+    if num_episodes % 1000000 == 0:
+        str_num_episodes = str(num_episodes/1000000)+"M"
+    elif num_episodes % 1000 == 0:
+        str_num_episodes = str(num_episodes/1000)+"k"
+    else:
+        str_num_episodes = str(num_episodes)
+    model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType()+"_w"+ w.getType()
+    if load_model:
+        model_name += "_("+load_model+")"
+    return model_name
+
+def save_model(model_name,results,QN,i):
+    """ Save model and results
+    @param String model_name
+    @param list(int,int) results
+    @param QNetwork QN
+    @param int i
+    """
+    new_model_name = model_name
+    if i>0:
+        new_model_name = model_name+"_"+str(i)
+    if os.path.exists(model_path+"/"+new_model_name):
+        save_model(model_name,results,QN,i+1)
+    else:
+        try:
+            os.makedirs(model_path+"/"+new_model_name)
+            pr.saveResults(results,model_path+"/"+new_model_name)
+            QN.saveModel(model_path+"/"+new_model_name)
+            print "Model saved as: "+new_model_name
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+def main(argv):
+    # Use view and initalize game and QNetwork
+    mode, num_episodes, QN, b, w, load_model = getArgs(argv)
+    model_name = getModel_name(mode,num_episodes, QN, b, w, load_model)
+
+    game = Game(view,b,w)
+    if mode == "load":
+        results = game.loadGames(db_path, num_episodes)
+    elif mode == "train":
+        results = game.train(num_episodes)
+    elif mode == "play":
+        results = game.play(num_episodes)
+
+    save_model(model_name, results, QN, 0)
+    print "Application finalized"
+
+if __name__ == "__main__":
+   main(sys.argv[1:])

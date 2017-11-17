@@ -4,34 +4,14 @@ import timeit
 import time
 import board
 from players.randomplayer import RandomPlayer
-from othello.process_results import ProcessResults
 
 class Game:
 
-    def __init__(self, view, p1, p2, path):
+    def __init__(self, view, b, w):
         self.view = view
-        self.p1 = p1
-        self.p2 = p2
-        self.path = path
+        self.b = b
+        self.w = w
         self.board = board.Board()
-        self.pr = ProcessResults()
-
-        self.gameModel = path+"/"+time.strftime("%Y-%m-%d_%H:%M:%S")
-        #Make a path for our model to be saved in.
-        if not os.path.exists(self.gameModel):
-            os.makedirs(self.gameModel)
-
-    def getPlayers(self):
-        """ Return players
-        @return Player,Player
-        """
-        return self.p1,self.p2
-
-    def getScore(self):
-        """ Get game score
-        @return [int,int] score
-        """
-        return self.board.getScore()
 
     def reset(self):
         """ Reset environment """
@@ -42,12 +22,12 @@ class Game:
         @param list(int) dbGame
         """
         # Get black player, first to move
-        if self.p1.getTile() == self.board.BLACK:
-            black = self.p1
-            white = self.p2
+        if self.b.getTile() == self.board.BLACK:
+            black = self.b
+            white = self.w
         else:
-            black = self.p2
-            white = self.p1
+            black = self.w
+            white = self.b
         actualTurnPlayer = black
         # Reset board
         self.reset()
@@ -72,11 +52,11 @@ class Game:
                 passCount += 1
             actualTurnPlayer = white if actualTurnPlayer is black else black
 
-    def train(self, num_episodes=100, gamesDB=[]):
+    def train(self, num_episodes, dbGames=[]):
         """ Train othello game, run games for especified num_episodes
         @param int num_episodes
-        @param list(list(int)) gamesDB
-        @return String gameModel
+        @param list(list(int)) dbGames
+        @return list(int,int) wins
         """
         start = timeit.default_timer()
         wins = []
@@ -84,12 +64,12 @@ class Game:
         # Train #num_episodes
         for i in range(num_episodes):
             dbGame = []
-            if gamesDB:
-                dbGame = gamesDB[i]
+            if dbGames:
+                dbGame = dbGames[i]
             self.gameStart(dbGame)
             # Update e for QPlayer
-            self.p1.updateEpsilon()
-            self.p2.updateEpsilon()
+            self.b.updateEpsilon()
+            self.w.updateEpsilon()
 
             if i % 100 == 0 and i > 0:
                 print "{"+str(i)+" - "+str(num_episodes)+"}"
@@ -105,13 +85,12 @@ class Game:
         wins.append(((winB),(winW)))
         stop = timeit.default_timer()
         print "Temps Final: " + str(stop-start)
-        self.pr.saveResults(wins,self.gameModel)
-        return self.gameModel
+        return wins
 
-    def play(self,num_episodes=100):
+    def play(self,num_episodes):
         """ Play othello game, run games for especified num_episodes
         @param int num_episode
-        @return String gameModel
+        @return list(int,int) wins
         """
         start = timeit.default_timer()
         winB = winW = 0
@@ -130,54 +109,54 @@ class Game:
                 pause = timeit.default_timer()
                 print "Temps: " + str(pause-start)
 
-            if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
+            if self.b.getScore(self.board) > self.w.getScore(self.board):
                 winB += 1
-            elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
+            elif self.b.getScore(self.board) < self.w.getScore(self.board):
                 winW += 1
         # Save wins and show time
         wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
         stop = timeit.default_timer()
         print "Temps Final: " + str(stop-start)
         print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
-        print "----------------------------------------"
-        self.pr.saveResults(wins,self.gameModel)
-        return self.gameModel
+        return wins
 
     def playRandomBatch(self):
-        """ Play 100 Random games versus AI """
+        """ Play 100 Random games versus AI
+        @return int,int winB,winW
+        """
         print "-- Percentage batch 100 Random games --"
-        tempP1 = self.p1
-        tempP2 = self.p2
-        self.p2 = RandomPlayer(-1)
+        tempB = self.b
+        tempW = self.w
+        self.w = RandomPlayer(-1)
         winB = winW = 0
 
         for i in range(100):
             self.gameStart()
 
-            if self.getScore()[self.board.BLACK] > self.getScore()[self.board.WHITE]:
+            if self.b.getScore(self.board) > self.w.getScore(self.board):
                 winB += 1
-            elif self.getScore()[self.board.BLACK] < self.getScore()[self.board.WHITE]:
+            elif self.b.getScore(self.board) < self.w.getScore(self.board):
                 winW += 1
         print "Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
         print "----------------------------------------"
-        self.p1 = tempP1
-        self.p2 = tempP2
+        self.b = tempB
+        self.w = tempW
         return winB,winW
 
-    def loadGames(self, path, load_episodes):
+    def loadGames(self, db_path, num_episodes):
         """ Load professional saved games
-        @param String path
-        @param int load_episodes
-        @return list(list(int)) games(moves)
+        @param String db_path
+        @param int num_episodes
+        @return list(int,int) wins
         """
-        with open(path, 'r') as f:
+        dbGames = []
+        with open(db_path, 'r') as f:
             #Open file and read all
             lines = f.readlines()
             lines = [ line.strip() for line in lines ]
-            newLines = []
-            if load_episodes == "all" or load_episodes > len(lines):
-                load_episodes = len(lines)
-            for idx in range(load_episodes):
+            if num_episodes == "all" or num_episodes > len(lines):
+                num_episodes = len(lines)
+            for idx in range(num_episodes):
                 # Put on memory only the number of games to play and return
                 newLine = []
                 i = 1
@@ -188,6 +167,8 @@ class Game:
                     else:
                         preChar = char
                     i += 1
-                newLines.append(newLine)
-            self.train(load_episodes,newLines)
-            return self.gameModel
+                dbGames.append(newLine)
+        if dbGames:
+            wins = self.train(num_episodes,dbGames)
+            return wins
+        return

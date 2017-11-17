@@ -4,16 +4,13 @@ import random
 class RandomPlayer(Player):
 
     def __init__(self,tile):
-        Player.__init__(self,tile)
+        Player.__init__(self,tile=tile,pType="RP")
 
-    def getMove(self,board,possibleMoves):
+    def getMove(self,s,possibleMoves):
         """
         Get the player's move
-        @param Board board
+        @param Board s
         @param list(int) possibleMoves
         @return int position
         """
         return random.choice(possibleMoves)
-
-    def updateEpsilon(self):
-        pass
