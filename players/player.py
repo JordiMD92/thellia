@@ -2,15 +2,6 @@ class Player:
     def __init__(self,tile):
         self.tile = tile
 
-    def getMove(self,s,possibleMoves,num_game):
-        """ Get the player's move
-        @param board s
-        @param list(int) possibleMoves
-        @param in num_game
-        @return int action
-        """
-        pass
-
     def getScore(self,board):
         """ Returns actual player score
         @param Board board

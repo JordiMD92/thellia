@@ -6,8 +6,8 @@ from tensorflow.python.keras.optimizers import SGD
 LOSS = 'mse'
 
 class QNetworkRelu(QNetwork):
-    def __init__(self,lr=0.01,drop=0.4):
-        QNetwork.__init__(self)
+    def __init__(self,batch_size,lr=0.01,drop=0.4):
+        QNetwork.__init__(self,batch_size)
         self.model.add(Dense(units=200,activation='relu',input_shape=(64,)))
         self.model.add(Dense(units=190,activation='relu'))
         self.model.add(Dense(units=180,activation='relu'))

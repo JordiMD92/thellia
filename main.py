@@ -6,8 +6,7 @@ from players.player_factory import PlayerFactory
 from networks.qnetwork_factory import QNetworkFactory
 from othello.process_results import ProcessResults
 
-""" page 105-145, 229-313, 439-473 | 40+84+34 = 158
-lr <- grid search """
+""" page 105-145, 229-313, 439-473 """
 
 model_path = "./models"
 db_path = "./DB/"
@@ -23,11 +22,11 @@ def getArgs(argv):
     @return Player w
     @return String load
     """
-    num_episodes = 0
+    num_episodes = batch_size = 0
     mode = qn_arg = b_arg = w_arg = load = ""
     #Check arguments
     try:
-        opts,args = getopt.getopt(argv,'m:e:n:b:w:l:',['mode=','episodes=','neural_network=','black=','white=','load='])
+        opts,args = getopt.getopt(argv,'m:e:n:s:b:w:l:',['mode=','episodes=','neural_network=','batch_size=','black=','white=','load='])
     except getopt.GetoptError as err:
         usage("Bad arguments usage")
     for opt, arg in opts:
@@ -39,7 +38,7 @@ def getArgs(argv):
         #Check episodes argument
         if opt in ("-e","--episodes"):
             try:
-                if int(arg) >= 1:
+                if int(arg) > 0:
                     num_episodes = int(arg)
                 else:
                     raise Exception()
@@ -50,6 +49,15 @@ def getArgs(argv):
             if arg not in (QNetworkFactory.getTypes()):
                 usage(arg+" is not a compatible network")
             qn_arg = arg
+        #Check batch size
+        if opt in ("-s","--batch_size"):
+            try:
+                if int(arg) > 0:
+                    batch_size = int(arg)
+                else:
+                    raise Exception()
+            except Exception as e:
+                print "The number of batch size must be a positive integer"
         #Check black player argument
         if opt in ("-b","--black"):
             if arg not in (PlayerFactory.getTypes()):
@@ -64,15 +72,15 @@ def getArgs(argv):
         if opt in ("-l","--load"):
             load = arg
     #Those 3 arguments are needed
-    if mode == "" or num_episodes == 0 or qn_arg == "":
-        usage("Mode, number of episodes and neural network are needed")
+    if mode == "" or num_episodes == 0 or qn_arg == "" or batch_size == 0:
+        usage("Mode, number of episodes, neural network and batch size are needed")
     #If play or train, players are needed
     if mode in ("play","train") and b_arg == "" and w_arg == "":
         print "Players are needed to " + mode
         sys.exit(2)
 
     #Get QNetwork
-    QN = QNetworkFactory.create(qn_arg)
+    QN = QNetworkFactory.create(qn_arg,batch_size)
 
     #Get Players
     b,w = PlayerFactory.create(b_arg,w_arg,QN,mode,num_episodes)
@@ -101,7 +109,7 @@ def getArgs(argv):
 def usage(error):
     """ Print information and exit """
     print error
-    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -b <player1_type> -w <player2_type> -l <load_model>"
+    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -s <batch_size> -b <player1_type> -w <player2_type> -l <load_model>"
     print "<mode>: [train/play/load] (train game, play game, or load from db)"
     print "<neural_network>: " + str(QNetworkFactory.getTypes())
     print "<player_type>: [QP/RP/HP] " + str(PlayerFactory.getTypes())

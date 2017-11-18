@@ -4,15 +4,15 @@ from qnetwork_sigmoid import QNetworkSigmoid
 class QNetworkFactory(object):
 
     @classmethod
-    def create(self,qType):
+    def create(self,qType,batch_size):
         """ Create network instance
         @param String qType
         @return QNetwork QNetwork
         """
         if qType == QNetworkRelu.getType():
-            return QNetworkRelu()
+            return QNetworkRelu(batch_size)
         elif qType == QNetworkSigmoid.getType():
-            return QNetworkSigmoid()
+            return QNetworkSigmoid(batch_size)
         else:
             return
 

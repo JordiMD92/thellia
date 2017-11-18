@@ -54,11 +54,7 @@ class Board(object):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=7) and (r>=0) and (r<=7)
 
-    def getRemainingPieces(self):
-        """ Returns remaining pieces """
-        return self.remaining_pieces
-
-    def endGame(self):
+    def isEndGame(self):
         if self.remaining_pieces == 0 or self.passCount == 2:
             return True
         return False
@@ -68,7 +64,7 @@ class Board(object):
         Update board and return new board and reward
         @param int tile
         @param int action
-        @return Board,int sPrime,reward
+        @return Board,int,bool sPrime,reward,done
         """
         self.updateBoard(tile,action)
         reward = 0
@@ -76,8 +72,7 @@ class Board(object):
             reward = -1
             if self.getScore()[tile] > self.getScore()[-tile]:
                 reward = 1
-        return self,reward
-
+        return self,reward, self.isEndGame()
 
     def updateBoard(self,tile,move):
         """

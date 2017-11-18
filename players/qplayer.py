@@ -1,6 +1,7 @@
 from player import Player
 import numpy as np
 import random
+from copy import deepcopy
 
 class QPlayer(Player):
 
@@ -16,18 +17,16 @@ class QPlayer(Player):
         if train == "play" or train == "load":
             self.e = -1
         self.y = 0.99
-        self.prev_game = 0
 
     def updateEpsilon(self):
         """ Update e greedy """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,s,possibleMoves,num_game):
+    def getMove(self,s,possibleMoves):
         """ Get the player's move
         @param board s
         @param list(int) possibleMoves
-        @param in num_game
         @return int action
         """
         boardShape = s.getBoardShape(self.QN.getInputShape(),self.tile)
@@ -38,18 +37,23 @@ class QPlayer(Player):
         else:
             action = self.get_best_possible_action(possibleMoves,Qout)
 
-        if self.train != "play": #train == "train" or "load"
+        if self.train != "play": #train == "train" or train == "load"
             #Get new state and reward from environment and update
-            sPrime,r = s.next(self.tile,action)
-            sPrimeBoardShape = sPrime.getBoardShape(self.QN.getInputShape(),self.tile)
-            Q1 = self.model.predict(sPrimeBoardShape,batch_size=1)
-            maxQ1 = np.max(Q1)
-            targetQ = Qout
-            targetQ[0,action] = r + self.y*maxQ1
-            self.model.fit(Qout,targetQ,epochs=1,verbose=0)
-            if num_game > self.prev_game:
-                self.prev_game = num_game
-                self.updateEpsilon()
+            sPrime,r,done = s.next(self.tile,action)
+            self.QN.addExperience(s,action,r,sPrime,done)
+            #Train when mem if it's len is at least batch_size
+            if self.QN.batch_size < len(self.QN.memBuffer):
+                trainBatch = self.QN.sample()
+                for s_batch,a_batch,r_batch,sP_batch,d_batch in trainBatch:
+                    sBoardShape = s_batch.getBoardShape(self.QN.getInputShape(),self.tile)
+                    sPBoardShape = sP_batch.getBoardShape(self.QN.getInputShape(),self.tile)
+                    Qout = self.model.predict(sBoardShape,batch_size=1)
+                    maxQ1 = np.max(self.model.predict(sPBoardShape,batch_size=1))
+                    targetQ = deepcopy(Qout)
+                    targetQ[0,a_batch] = r_batch if d_batch else r_batch + self.y*maxQ1
+                    self.model.fit(Qout,targetQ,epochs=1,verbose=0)
+                    if d_batch:
+                        self.updateEpsilon()
         return action
 
     def get_best_possible_action(self,possible_moves,moves):

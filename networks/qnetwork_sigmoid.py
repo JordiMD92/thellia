@@ -6,8 +6,8 @@ from tensorflow.python.keras.optimizers import SGD
 LOSS = 'mse'
 
 class QNetworkSigmoid(QNetwork):
-    def __init__(self,lr=0.05):
-        QNetwork.__init__(self)
+    def __init__(self,batch_size,lr=0.05):
+        QNetwork.__init__(self,batch_size)
         self.model.add(Dense(units=200,activation='sigmoid',input_shape=(64,)))
         self.model.add(Dense(units=150,activation='sigmoid'))
         self.model.add(Dense(units=100,activation='sigmoid'))

@@ -1,5 +1,4 @@
 from __future__ import division
-import os
 import timeit
 import time
 import board
@@ -17,7 +16,7 @@ class Game:
         """ Reset environment """
         self.board = board.Board()
 
-    def gameStart(self, num_game, dbGame=[]):
+    def gameStart(self, dbGame=[]):
         """ Game engine to play Othello, switch between players and do moves
         @param list(int) dbGame
         """
@@ -33,7 +32,7 @@ class Game:
         self.reset()
         passCount = 0
         idx = 0
-        while not self.board.endGame():
+        while not self.board.isEndGame():
             if dbGame and idx < len(dbGame):
                 #If dbGame, check same tile turn
                 if dbGame[idx][0] == actualTurnPlayer.getTile():
@@ -49,7 +48,7 @@ class Game:
             if possibleMoves:
                 # If there is a move, get player move and update board
                 passCount = 0
-                move = actualTurnPlayer.getMove(self.board, possibleMoves, num_game)
+                move = actualTurnPlayer.getMove(self.board, possibleMoves)
                 self.board.updateBoard(actualTurnPlayer.getTile(), move)
             else:
                 #If there aren't moves, pass
@@ -72,20 +71,34 @@ class Game:
             dbGame = []
             if dbGames:
                 dbGame = dbGames[i]
-            self.gameStart(i,dbGame)
+            self.gameStart(dbGame)
 
-            if i % 100 == 0 and i > 0:
+            if i % 100 == 0 and i > 0 and i != num_episodes:
                 print "{"+str(i)+" - "+str(num_episodes)+"}"
             # Save wins and show time
-            if i % 1000 == 0 and i > 0:
+            if i % 1000 == 0 and i > 0 and i != num_episodes:
                 pause = timeit.default_timer()
                 print "Temps: " + str(pause-start)
-                winB,winW = self.playRandomBatch()
-                wins.append(((winB),(winW)))
+                print "-- Play batch 100 Random games --"
+                tempW = self.w
+                self.w = RandomPlayer(-1)
+                tempBTrain = self.b.train
+                self.b.train = "play"
+                winsBatch,_ = self.play(100)
+                self.w = tempW
+                self.b.train = tempBTrain
+                print "---------------------------------"
+                wins += winsBatch
 
-        # Save wins and show time
-        winB,winW = self.playRandomBatch()
-        wins.append(((winB),(winW)))
+        # Play random batch and return results
+        print "-- Play batch 100 Random games --"
+        tempW = self.w
+        self.w = RandomPlayer(-1)
+        self.b.train = "play"
+        winsBatch,time = self.play(100)
+        self.w = tempW
+        print "---------------------------------"
+        wins += winsBatch
         stop = timeit.default_timer()
         time = str(stop-start)
         return wins,time
@@ -102,13 +115,13 @@ class Game:
 
         # Play #num_episodes
         for i in range(num_episodes):
-            self.gameStart(i)
+            self.gameStart()
 
             # Save wins and show time
-            if i % 100 == 0 and i > 0:
+            if i % 100 == 0 and i > 0 and i != num_episodes:
                 wins.append(((winB/i*100),(winW/i*100)))
                 print wins
-            if i % 1000 == 0 and i > 0:
+            if i % 1000 == 0 and i > 0 and i != num_episodes:
                 print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
                 pause = timeit.default_timer()
                 print "Temps: " + str(pause-start)
@@ -124,43 +137,22 @@ class Game:
         print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
         return wins,time
 
-    def playRandomBatch(self):
-        """ Play 100 Random games versus AI
-        @return int,int winB,winW
-        """
-        print "-- Percentage batch 100 Random games --"
-        tempB = self.b
-        tempW = self.w
-        self.w = RandomPlayer(-1)
-        winB = winW = 0
-
-        for i in range(100):
-            self.gameStart(i)
-
-            if self.b.getScore(self.board) > self.w.getScore(self.board):
-                winB += 1
-            elif self.b.getScore(self.board) < self.w.getScore(self.board):
-                winW += 1
-        print "Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
-        print "---------------------------------------"
-        self.b = tempB
-        self.w = tempW
-        return winB,winW
-
-    def loadGames(self, db_path, num_episodes):
+    def loadGames(self, db_path, total_episodes):
         """ Load professional saved games
         @param String db_path
         @param int num_episodes
         @return list(int,int) wins
         @return float time
         """
+        num_episodes = total_episodes
         filenames = ["originalDB","mirrorHDB","mirrorDDB","mirrorDHDB"]
         dbGames = []
         for filename in filenames:
             games,num_episodes = self.loadGame(db_path,filename,num_episodes)
             if games:
                 dbGames += games
-        return self.train(num_episodes,dbGames)
+        train_episodes = total_episodes if num_episodes == -1 else total_episodes-num_episodes
+        return self.train(train_episodes,dbGames)
 
     def loadGame(self,db_path,filename,total_episodes):
         if total_episodes > 0:
