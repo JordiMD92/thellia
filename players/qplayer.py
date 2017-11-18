@@ -5,27 +5,29 @@ import random
 class QPlayer(Player):
 
     def __init__(self,tile,QN,train,num_episodes):
-        Player.__init__(self,tile=tile,pType="QP")
+        Player.__init__(self,tile=tile)
         self.QN = QN
         self.model = self.QN.getModel()
         self.train = train
         self.num_episodes = num_episodes
         self.e = 1
-        if not train or train == "load":
-            self.e = -1
         if QN.isModelLoaded():
             self.e = 0.1
+        if train == "play" or train == "load":
+            self.e = -1
         self.y = 0.99
+        self.prev_game = 0
 
     def updateEpsilon(self):
         """ Update e greedy """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,s,possibleMoves):
+    def getMove(self,s,possibleMoves,num_game):
         """ Get the player's move
         @param board s
         @param list(int) possibleMoves
+        @param in num_game
         @return int action
         """
         boardShape = s.getBoardShape(self.QN.getInputShape(),self.tile)
@@ -36,7 +38,7 @@ class QPlayer(Player):
         else:
             action = self.get_best_possible_action(possibleMoves,Qout)
 
-        if self.train:
+        if self.train != "play": #train == "train" or "load"
             #Get new state and reward from environment and update
             sPrime,r = s.next(self.tile,action)
             sPrimeBoardShape = sPrime.getBoardShape(self.QN.getInputShape(),self.tile)
@@ -45,6 +47,9 @@ class QPlayer(Player):
             targetQ = Qout
             targetQ[0,action] = r + self.y*maxQ1
             self.model.fit(Qout,targetQ,epochs=1,verbose=0)
+            if num_game > self.prev_game:
+                self.prev_game = num_game
+                self.updateEpsilon()
         return action
 
     def get_best_possible_action(self,possible_moves,moves):
@@ -60,3 +65,10 @@ class QPlayer(Player):
             if move[1] in possible_moves:
                 return move[1]
         return -1
+
+    @classmethod
+    def getType(self):
+        """ Returns players type
+        @return string type
+        """
+        return "QP"

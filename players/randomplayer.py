@@ -4,13 +4,21 @@ import random
 class RandomPlayer(Player):
 
     def __init__(self,tile):
-        Player.__init__(self,tile=tile,pType="RP")
+        Player.__init__(self,tile=tile)
 
-    def getMove(self,s,possibleMoves):
+    def getMove(self,s,possibleMoves,num_game):
         """
         Get the player's move
         @param Board s
         @param list(int) possibleMoves
+        @param in num_game
         @return int position
         """
         return random.choice(possibleMoves)
+
+    @classmethod
+    def getType(self):
+        """ Returns players type
+        @return string type
+        """
+        return "RP"

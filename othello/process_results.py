@@ -6,7 +6,7 @@ class ProcessResults():
     def __init__(self):
         self.fn = "/results"
 
-    def saveResults(self,results,model_path):
+    def saveResults(self,results,time,model_path):
         with open(model_path+self.fn,'w') as f:
             winsB = []
             winsW = []
@@ -17,6 +17,7 @@ class ProcessResults():
             winsW = ':'.join(map(str, winsW))
             f.write(winsB+"\n")
             f.write(winsW+"\n")
+            f.write("Temps: "+time+"\n")
 
     def printPlot(self,model):
         path = model+self.fn

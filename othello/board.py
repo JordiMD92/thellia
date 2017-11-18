@@ -12,6 +12,7 @@ class Board(object):
         self.board[4][3] = Board.BLACK
 
         self.remaining_pieces = 8*8-4
+        self.passCount = 0
         self.score = {Board.BLACK: 2, Board.WHITE: 2}
 
     def getScore(self):
@@ -56,6 +57,11 @@ class Board(object):
     def getRemainingPieces(self):
         """ Returns remaining pieces """
         return self.remaining_pieces
+
+    def endGame(self):
+        if self.remaining_pieces == 0 or self.passCount == 2:
+            return True
+        return False
 
     def next(self,tile,action):
         """

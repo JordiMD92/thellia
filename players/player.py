@@ -1,25 +1,15 @@
 class Player:
-    def __init__(self,tile,pType):
+    def __init__(self,tile):
         self.tile = tile
-        self.pType = pType
 
-    def updateEpsilon(self):
-        """ Update e greedy """
-        pass
-
-    def getMove(self,s,possibleMoves):
+    def getMove(self,s,possibleMoves,num_game):
         """ Get the player's move
         @param board s
         @param list(int) possibleMoves
+        @param in num_game
         @return int action
         """
         pass
-
-    def getType(self):
-        """ Returns players type
-        @return string pType
-        """
-        return self.pType
 
     def getScore(self,board):
         """ Returns actual player score
