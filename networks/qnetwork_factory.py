@@ -1,5 +1,6 @@
 from qnetwork_relu import QNetworkRelu
 from qnetwork_sigmoid import QNetworkSigmoid
+from qnetwork_softmax import QNetworkSoftmax
 
 class QNetworkFactory(object):
 
@@ -13,6 +14,8 @@ class QNetworkFactory(object):
             return QNetworkRelu(batch_size)
         elif qType == QNetworkSigmoid.getType():
             return QNetworkSigmoid(batch_size)
+        elif qType == QNetworkSoftmax.getType():
+            return QNetworkSoftmax(batch_size)
         else:
             return
 
@@ -24,4 +27,5 @@ class QNetworkFactory(object):
         types = []
         types.append(QNetworkRelu.getType())
         types.append(QNetworkSigmoid.getType())
+        types.append(QNetworkSoftmax.getType())
         return types
