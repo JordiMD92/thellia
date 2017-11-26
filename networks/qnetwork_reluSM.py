@@ -4,10 +4,11 @@ from tensorflow.python.keras.optimizers import SGD
 
 #64:200:190:180...:64 RELU
 LOSS = 'mse'
+
 def_lr = 0.01
 def_drop = 0.4
 
-class QNetworkRelu(QNetwork):
+class QNetworkReluSM(QNetwork):
     def __init__(self,batch_size,lr,drop):
         self.lr = def_lr if lr == 0 else lr
         self.drop =  def_drop if drop == 0 else drop
@@ -25,7 +26,7 @@ class QNetworkRelu(QNetwork):
         self.model.add(Dense(units=100,activation='relu'))
         self.model.add(Dense(units=90,activation='relu'))
         self.model.add(Dense(units=80,activation='relu'))
-        self.model.add(Dense(units=64,activation='relu'))
+        self.model.add(Dense(units=64,activation='softmax'))
         self.model.add(Dropout(drop))
         sgd = SGD(lr)
         self.model.compile(loss=LOSS,optimizer=sgd)
@@ -42,7 +43,7 @@ class QNetworkRelu(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "relu"
+        return "reluSM"
 
     def getLR(self):
         """ Returns learning rate

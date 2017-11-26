@@ -7,7 +7,7 @@ class QNetwork:
         self.modelLoaded = False
         self.model = Sequential()
         self.batch_size = batch_size
-        self.memBuffer = deque(maxlen=2000)
+        self.memBuffer = deque(maxlen=1) if batch_size == 1 else deque(maxlen=2000)
 
     def getModel(self):
         """ Return QN model

@@ -22,11 +22,11 @@ def getArgs(argv):
     @return Player w
     @return String load
     """
-    num_episodes = batch_size = 0
+    num_episodes = batch_size = lrate = drop = 0
     mode = qn_arg = b_arg = w_arg = load = ""
     #Check arguments
     try:
-        opts,args = getopt.getopt(argv,'m:e:n:s:b:w:l:',['mode=','episodes=','neural_network=','batch_size=','black=','white=','load='])
+        opts,args = getopt.getopt(argv,'m:e:n:s:r:d:b:w:l',['mode=','episodes=','neural_network=','batch_size=','lrate=','dropout=','black=','white=','load='])
     except getopt.GetoptError as err:
         usage("Bad arguments usage")
     for opt, arg in opts:
@@ -58,6 +58,24 @@ def getArgs(argv):
                     raise Exception()
             except Exception as e:
                 print "The number of batch size must be a positive integer"
+        #Check learning rate
+        if opt in ("-r","--lrate"):
+            try:
+                if float(arg) > 0:
+                    lrate = float(arg)
+                else:
+                    raise Exception()
+            except Exception as e:
+                print "The number of learning rate must be a positive float"
+        #Check dropout
+        if opt in ("-d","--dropout"):
+            try:
+                if float(arg) > 0:
+                    drop = float(arg)
+                else:
+                    raise Exception()
+            except Exception as e:
+                print "The number of dropout must be a positive float"
         #Check black player argument
         if opt in ("-b","--black"):
             if arg not in (PlayerFactory.getTypes()):
@@ -80,7 +98,7 @@ def getArgs(argv):
         sys.exit(2)
 
     #Get QNetwork
-    QN = QNetworkFactory.create(qn_arg,batch_size)
+    QN = QNetworkFactory.create(qn_arg,batch_size,lrate,drop)
 
     #Get Players
     b,w = PlayerFactory.create(b_arg,w_arg,QN,mode,num_episodes)
@@ -104,18 +122,18 @@ def getArgs(argv):
             QN.loadModel(model_path+"/"+load)
             print "Model ["+load+"] loaded"
 
-    return mode,num_episodes,QN,b,w,load
+    return mode,num_episodes,QN,b,w,batch_size,load
 
 def usage(error):
     """ Print information and exit """
     print error
-    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -s <batch_size> -b <player1_type> -w <player2_type> -l <load_model>"
+    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -s <batch_size> -r <learning_rate> -d <dropout> -b <player1_type> -w <player2_type> -l <load_model>"
     print "<mode>: [train/play/load] (train game, play game, or load from db)"
     print "<neural_network>: " + str(QNetworkFactory.getTypes())
     print "<player_type>: [QP/RP/HP] " + str(PlayerFactory.getTypes())
     sys.exit(2)
 
-def getModel_name(mode, num_episodes, QN, b, w, load_model):
+def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
     """ Get model name of the folders
     @param String mode
     @param int num_episodes
@@ -131,7 +149,9 @@ def getModel_name(mode, num_episodes, QN, b, w, load_model):
         str_num_episodes = str(int(num_episodes/1000))+"k"
     else:
         str_num_episodes = str(num_episodes)
-    model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType()+"_w"+ w.getType()
+    model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType() +"_w"+ w.getType() +"_s"+ str(s) +"_lr"+ str(QN.getLR())
+    if QN.getType() == "relu" or QN.getType() == "reluSM":
+        model_name += "_drop"+ str(QN.getDrop())
     if load_model:
         model_name += "_("+load_model+")"
     return model_name
@@ -161,8 +181,8 @@ def save_model(model_name,results,QN,time,i):
 
 def main(argv):
     # Use view and initalize game and QNetwork
-    mode, num_episodes, QN, b, w, load_model = getArgs(argv)
-    model_name = getModel_name(mode,num_episodes, QN, b, w, load_model)
+    mode, num_episodes, QN, b, w, s, load_model = getArgs(argv)
+    model_name = getModel_name(mode,num_episodes, QN, b, w, s, load_model)
 
     game = Game(view,b,w)
     if mode == "load":
