@@ -1,6 +1,21 @@
 import os
 class MinimalView:
 
+    def printBoard(self,board):
+        """ Print actual board state """
+        print("   A   B   C   D   E   F   G   H  ")
+        print(" - - - - - - - - - - - - - - - - -")
+        for r in range(0,8,1):
+            row = ""
+            for c in range(0,8,1):
+                value = "|   "
+                if board[c][r] == -1: value = "| X "
+                if board[c][r] == 1: value = "| O "
+                row = row+value
+            print(str(r+1)+row+"|")
+            print(" - - - - - - - - - - - - - - - - -")
+
+
     def askMove(self,posibleMoves):
         """ Ask what move the player will do """
         print("Where will you move?")

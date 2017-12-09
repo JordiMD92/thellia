@@ -1,4 +1,5 @@
 from tensorflow.python.keras.models import Sequential, load_model
+from tensorflow.python.keras.callbacks import TensorBoard
 from collections import deque
 import random
 
@@ -14,6 +15,9 @@ class QNetwork:
         @return Keras.model model
         """
         return self.model
+
+    def initTensorboard(self,folder):
+        self.tbCallBack = TensorBoard(log_dir=folder+'/Graph', histogram_freq=0, write_graph=True, write_images=True)
 
     def loadModel(self,folder):
         """ Load model_name to QN

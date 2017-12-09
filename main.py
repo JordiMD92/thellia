@@ -101,7 +101,7 @@ def getArgs(argv):
     QN = QNetworkFactory.create(qn_arg,batch_size,lrate,drop)
 
     #Get Players
-    b,w = PlayerFactory.create(b_arg,w_arg,QN,mode,num_episodes)
+    b,w = PlayerFactory.create(view,b_arg,w_arg,QN,mode,num_episodes)
 
     #Create model_path if doesn't exists
     try:
@@ -133,6 +133,25 @@ def usage(error):
     print "<player_type>: [QP/RP/HP] " + str(PlayerFactory.getTypes())
     sys.exit(2)
 
+def createFolder(model_name,i):
+    """ Create folder to save model
+    @param String model_name
+    @param int i
+    @return String new_model_name
+    """
+    new_model_name = model_name
+    if i>0:
+        new_model_name = model_name+"_"+str(i)
+    if os.path.exists(model_path+"/"+new_model_name):
+        return createFolder(model_name,i+1)
+    else:
+        try:
+            os.makedirs(model_path+"/"+new_model_name)
+            return new_model_name
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
 def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
     """ Get model name of the folders
     @param String mode
@@ -154,35 +173,26 @@ def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
         model_name += "_drop"+ str(QN.getDrop())
     if load_model:
         model_name += "_("+load_model+")"
-    return model_name
 
-def save_model(model_name,results,QN,time,i):
+    new_model_name = createFolder(model_name,0)
+    return new_model_name
+
+def save_model(model_name,results,QN,time):
     """ Save model and results
     @param String model_name
     @param list(int,int) results
     @param QNetwork QN
     @param float time
-    @param int i
     """
-    new_model_name = model_name
-    if i>0:
-        new_model_name = model_name+"_"+str(i)
-    if os.path.exists(model_path+"/"+new_model_name):
-        save_model(model_name,results,QN,time,i+1)
-    else:
-        try:
-            os.makedirs(model_path+"/"+new_model_name)
-            pr.saveResults(results,time,model_path+"/"+new_model_name)
-            QN.saveModel(model_path+"/"+new_model_name)
-            print "Model saved as: "+new_model_name
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
+    pr.saveResults(results,time,model_path+"/"+model_name)
+    QN.saveModel(model_path+"/"+model_name)
+    print "Model saved as: "+model_name
 
 def main(argv):
     # Use view and initalize game and QNetwork
     mode, num_episodes, QN, b, w, s, load_model = getArgs(argv)
     model_name = getModel_name(mode,num_episodes, QN, b, w, s, load_model)
+    QN.initTensorboard(model_path+'/'+model_name)
 
     game = Game(view,b,w)
     if mode == "load":
@@ -193,7 +203,7 @@ def main(argv):
         results,time = game.play(num_episodes)
     print "Temps Final: " + time
 
-    save_model(model_name, results, QN, time, 0)
+    save_model(model_name, results, QN, time)
     print "Application finalized"
 
 if __name__ == "__main__":

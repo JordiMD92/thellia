@@ -1,7 +1,7 @@
 from qnetwork_relu import QNetworkRelu
 from qnetwork_sigmoid import QNetworkSigmoid
-from qnetwork_reluSM import QNetworkReluSM
-from qnetwork_sigmoidSM import QNetworkSigmoidSM
+from qnetwork_reluSM6 import QNetworkReluSM
+from qnetwork_sigmoidSM6 import QNetworkSigmoidSM
 
 class QNetworkFactory(object):
 

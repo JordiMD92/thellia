@@ -14,6 +14,7 @@ class HumanPlayer(Player):
         @param in num_game
         @return int position
         """
+        self.view.printBoard(board.getBoard())
         return self.view.askMove(possibleMoves)
 
     @classmethod

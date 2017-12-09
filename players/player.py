@@ -19,13 +19,13 @@ class Player:
         """
         Check if the player can make a move
         @param Board board
-        @return list(c+r*8)
+        @return list(c+r*board.SIZE)
             list of posible moves in 1 dimension format
         """
         possibleMoves = []
-        for c in xrange(0,8):
-            for r in xrange(0,8):
+        for c in xrange(0,board.SIZE):
+            for r in xrange(0,board.SIZE):
                 if board.isValidMove(self.tile,c,r):
-                    possibleMoves.append(c+r*8)
+                    possibleMoves.append(c+r*board.SIZE)
 
         return possibleMoves

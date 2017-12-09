@@ -5,7 +5,7 @@ from qplayer import QPlayer
 class PlayerFactory(object):
 
     @classmethod
-    def create(self,bType,wType,QN,mode,num_episodes):
+    def create(self,view,bType,wType,QN,mode,num_episodes):
         """ Create player instance
         @param String bType
         @param String wType
@@ -14,18 +14,19 @@ class PlayerFactory(object):
         @param int num_episodes
         @return Player Player
         """
-        b = QPlayer(1,QN,mode,num_episodes)
-        w = QPlayer(-1,QN,mode,num_episodes)
+        b = QPlayer(1,QN,mode,num_episodes,train=True)
+        w = QPlayer(-1,QN,mode,num_episodes,train=False)
 
         if bType == HumanPlayer.getType():
-            b = HumanPlayer(1)
+            b = HumanPlayer(1,view)
         elif bType == RandomPlayer.getType():
             b = RandomPlayer(1)
 
         if wType == HumanPlayer.getType():
-            w = HumanPlayer(-1)
+            w = HumanPlayer(-1,view)
         elif wType == RandomPlayer.getType():
             w = RandomPlayer(-1)
+
         return b,w
 
     @classmethod

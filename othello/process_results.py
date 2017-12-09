@@ -28,8 +28,11 @@ class ProcessResults():
             lines = f.readlines()
             winsB = lines[0].split(":")
             winsW = lines[1].split(":")
+            print lines[2]
         winsB = map(float, winsB)
         winsW = map(float, winsW)
+        print "Average % Black wins: "+str((sum(winsB)/len(winsB)))
+        print "Average % White wins: "+str((sum(winsW)/len(winsW)))
         plt.figure(1)
         plt.plot([x for x in winsB],'r^',[y for y in winsW],'bs')
         plt.axis([0, len(winsB)-1, 0, 100])

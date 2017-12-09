@@ -83,7 +83,7 @@ class Game:
                 tempW = self.w
                 self.w = RandomPlayer(-1)
                 tempBTrain = self.b.train
-                self.b.train = "play"
+                self.b.mode = "play"
                 winsBatch,_ = self.play(100)
                 self.w = tempW
                 self.b.train = tempBTrain
@@ -94,7 +94,7 @@ class Game:
         print "-- Play batch 100 Random games --"
         tempW = self.w
         self.w = RandomPlayer(-1)
-        self.b.train = "play"
+        self.b.mode = "play"
         winsBatch,time = self.play(100)
         self.w = tempW
         print "---------------------------------"
