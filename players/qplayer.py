@@ -1,7 +1,7 @@
 from player import Player
 import numpy as np
 import random
-from copy import deepcopy
+import tensorflow as tf
 
 class QPlayer(Player):
 
@@ -32,6 +32,7 @@ class QPlayer(Player):
         @return int action
         """
         boardShape = s.getBoardShape(self.QN.getInputShape(),self.tile)
+        boardShape = boardShape.reshape((-1,self.QN.getInputShape()))
         Qout = self.model.predict(boardShape,batch_size=1)
         #Choose move e-greedyly, random or from network
         if np.random.rand(1) < self.e:
@@ -47,17 +48,22 @@ class QPlayer(Player):
             #Train when mem if it's len is at least batch_size
             if self.conta % self.QN.batch_size == 0:
                 trainBatch = self.QN.sample()
-                for s_batch,a_batch,r_batch,sP_batch,d_batch in trainBatch:
-                    sBoardShape = s_batch.getBoardShape(self.QN.getInputShape(),self.tile)
+                inputs = np.zeros((self.QN.batch_size,self.QN.getInputShape()))
+                targets = np.zeros((self.QN.batch_size,self.QN.getInputShape()))
+                for i in range(self.QN.batch_size):
+                    s_batch,a_batch,r_batch,sP_batch,d_batch = trainBatch[i]
+                    inputs[i] = s_batch.getBoardShape(self.QN.getInputShape(),self.tile)
                     sPBoardShape = sP_batch.getBoardShape(self.QN.getInputShape(),self.tile)
-                    Qout = self.model.predict(sBoardShape,batch_size=1)
-                    maxQ1 = np.max(self.model.predict(sPBoardShape,batch_size=1))
-                    targetQ = Qout
-                    targetQ[0,a_batch] = r_batch + self.y*maxQ1
-                    epochs = 4 if d_batch else 1    #Valorar els moviments finals
-                    self.model.fit(sBoardShape, targetQ, epochs=epochs, verbose=0, callbacks=[self.QN.tbCallBack])
+                    newShape = inputs[i].reshape((-1,self.QN.getInputShape()))
+                    targets[i] = self.model.predict(newShape) #Qout
+                    sPBoardShape = sPBoardShape.reshape((-1,self.QN.getInputShape()))
+                    maxQ1 = np.max(self.model.predict(sPBoardShape))
+                    targets[i,a_batch] = r_batch if d_batch else r_batch + self.y*maxQ1
                     if d_batch:
                         self.updateEpsilon()
+                loss = self.model.train_on_batch(inputs, targets)
+                summary = tf.Summary(value=[tf.Summary.Value(tag="loss",simple_value=loss),])
+                self.QN.tbWriter.add_summary(summary)
         return action
 
     def get_best_possible_action(self,possible_moves,moves,s):

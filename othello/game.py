@@ -1,7 +1,7 @@
 from __future__ import division
 import timeit
 import time
-import board
+from othello.board import Board
 from players.randomplayer import RandomPlayer
 
 class Game:
@@ -10,11 +10,11 @@ class Game:
         self.view = view
         self.b = b
         self.w = w
-        self.board = board.Board()
+        self.board = Board()
 
     def reset(self):
         """ Reset environment """
-        self.board = board.Board()
+        self.board = Board()
 
     def gameStart(self, dbGame=[]):
         """ Game engine to play Othello, switch between players and do moves

@@ -1,23 +1,27 @@
 import numpy
+from copy import deepcopy
 
 class Board(object):
     BLACK = 1
     WHITE = -1
 
-    FITBOARD = [[99,-8,6,6,-8,99],
-                [-8,-24,-3,-3,-24,-8],
-                [6,-3,0,0,-3,6],
-                [6,-3,0,0,-3,6],
-                [-8,-24,-3,-3,-24,-8],
-                [99,-8,6,6,-8,99]]
-    SIZE = 6
+    FITBOARD = [[99,-8,8,6,6,8,-8,99],
+                [-8,-24,-4,-3,-3,-4,-24,-8],
+                [8,-4,7,4,4,7,-4,8],
+                [6,-3,4,0,0,4,-3,6],
+                [6,-3,4,0,0,4,-3,6],
+                [8,-4,7,4,4,7,-4,8],
+                [-8,-24,-4,-3,-3,-4,-24,-8],
+                [99,-8,8,6,6,8,-8,99]]
+
+    SIZE = 8
 
     def __init__(self):
         self.board = numpy.zeros((Board.SIZE,Board.SIZE), int)
-        self.board[2][2] = Board.WHITE
         self.board[3][3] = Board.WHITE
-        self.board[2][3] = Board.BLACK
-        self.board[3][2] = Board.BLACK
+        self.board[4][4] = Board.WHITE
+        self.board[3][4] = Board.BLACK
+        self.board[4][3] = Board.BLACK
 
         self.remaining_pieces = Board.SIZE*Board.SIZE-4
         self.passCount = 0
@@ -37,7 +41,7 @@ class Board(object):
         @param int tile
         @return list(int) shapedBoard
         """
-        oneD = self.board.reshape((-1,pow(Board.SIZE,2)))
+        oneD = self.board.reshape((pow(Board.SIZE,2)))
         if num_positions == pow(Board.SIZE,2):
             # vector of 36 positions
             return oneD
@@ -74,13 +78,14 @@ class Board(object):
         @param int action
         @return Board,int,bool sPrime,reward,done
         """
-        self.updateBoard(tile,action)
+        sP = deepcopy(self)
+        sP.updateBoard(tile,action)
         reward = 0
-        if self.isEndGame():
+        if sP.isEndGame():
             reward = -1
-            if self.getScore()[tile] > self.getScore()[-tile]:
+            if sP.getScore()[tile] > sP.getScore()[-tile]:
                 reward = 1
-        return self,reward, self.isEndGame()
+        return sP,reward, sP.isEndGame()
 
     def updateBoard(self,tile,move):
         """
@@ -89,7 +94,7 @@ class Board(object):
             1 for BLACK
             -1 for WHITE
         @param int move
-            0-35 vector position
+            0-63 vector position
         @return bool can_move
         """
         row = move // Board.SIZE
@@ -113,9 +118,9 @@ class Board(object):
             1 for BLACK
             -1 for WHITE
         @param int col
-            0-Board.SIZE-1 column position
+            0-7 column position
         @param int row
-            0-Board.SIZE-1 row position
+            0-7 row position
         @return int[][]
             void if invalid move
             list of tiles to flip if valid move

@@ -1,7 +1,9 @@
 from tensorflow.python.keras.models import Sequential, load_model
 from tensorflow.python.keras.callbacks import TensorBoard
+import tensorflow as tf
 from collections import deque
 import random
+from copy import deepcopy
 
 class QNetwork:
     def __init__(self,batch_size):
@@ -17,7 +19,7 @@ class QNetwork:
         return self.model
 
     def initTensorboard(self,folder):
-        self.tbCallBack = TensorBoard(log_dir=folder+'/Graph', histogram_freq=0, write_graph=True, write_images=True)
+        self.tbWriter = tf.summary.FileWriter(folder+'/Graph')
 
     def loadModel(self,folder):
         """ Load model_name to QN
@@ -43,7 +45,7 @@ class QNetwork:
         @param Board sPrime
         @param bool done
         """
-        self.memBuffer.append((s,action,r,sPrime,done))
+        self.memBuffer.append((deepcopy(s),action,r,deepcopy(sPrime),done))
 
     def sample(self):
         """ Return batch of experiences
