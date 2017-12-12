@@ -1,16 +1,14 @@
 from tensorflow.python.keras.models import Sequential, load_model
-from tensorflow.python.keras.callbacks import TensorBoard
 import tensorflow as tf
 from collections import deque
 import random
-from copy import deepcopy
 
 class QNetwork:
     def __init__(self,batch_size):
         self.modelLoaded = False
         self.model = Sequential()
         self.batch_size = batch_size
-        self.memBuffer = deque(maxlen=1) if batch_size == 1 else deque(maxlen=2000)
+        self.memBuffer = deque(maxlen=1) if batch_size == 1 else deque(maxlen=50000)
 
     def getModel(self):
         """ Return QN model
@@ -45,7 +43,7 @@ class QNetwork:
         @param Board sPrime
         @param bool done
         """
-        self.memBuffer.append((deepcopy(s),action,r,deepcopy(sPrime),done))
+        self.memBuffer.append((s,action,r,sPrime,done))
 
     def sample(self):
         """ Return batch of experiences

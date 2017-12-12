@@ -31,12 +31,6 @@ class QNetworkRelu(QNetwork):
         self.model.compile(loss=LOSS,optimizer=sgd)
         print "Model ["+self.getType()+"] generated"
 
-    def getInputShape(self):
-        """ Returns Network input shape
-        @return int shape
-        """
-        return 64
-
     @classmethod
     def getType(self):
         """ Returns Network type

@@ -3,6 +3,7 @@ import timeit
 import time
 from othello.board import Board
 from players.randomplayer import RandomPlayer
+from players.maxtileplayer import MaxTilePlayer
 
 class Game:
 
@@ -76,12 +77,13 @@ class Game:
             if i % 100 == 0 and i > 0 and i != num_episodes:
                 print "{"+str(i)+" - "+str(num_episodes)+"}"
             # Save wins and show time
-            if i % 1000 == 0 and i > 0 and i != num_episodes:
+            if i % 200 == 0 and i > 0 and i != num_episodes:
                 pause = timeit.default_timer()
                 print "Temps: " + str(pause-start)
                 print "-- Play batch 100 Random games --"
                 tempW = self.w
-                self.w = RandomPlayer(-1)
+                #self.w = RandomPlayer(-1)
+                self.w = MaxTilePlayer(-1)
                 tempBTrain = self.b.train
                 self.b.mode = "play"
                 winsBatch,_ = self.play(100)
@@ -95,7 +97,7 @@ class Game:
         tempW = self.w
         self.w = RandomPlayer(-1)
         self.b.mode = "play"
-        winsBatch,time = self.play(100)
+        winsBatch,_ = self.play(100)
         self.w = tempW
         print "---------------------------------"
         wins += winsBatch

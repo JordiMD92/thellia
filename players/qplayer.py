@@ -19,54 +19,54 @@ class QPlayer(Player):
             self.e = -1
         self.y = 0.99
         self.conta = 0
+        self.updateFreq = 8
 
     def updateEpsilon(self):
         """ Update e greedy """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,s,possibleMoves):
+    def getMove(self,board,possibleMoves):
         """ Get the player's move
-        @param board s
+        @param board board
         @param list(int) possibleMoves
         @return int action
         """
-        boardShape = s.getBoardShape(self.QN.getInputShape(),self.tile)
-        boardShape = boardShape.reshape((-1,self.QN.getInputShape()))
-        Qout = self.model.predict(boardShape,batch_size=1)
+        s = board.getBoardState()
+        s = s.reshape((-1,board.getBoardSize())) #(1,Board.SIZE)
+        Qout = self.model.predict(s)
         #Choose move e-greedyly, random or from network
         if np.random.rand(1) < self.e:
             action = random.choice(possibleMoves)
         else:
-            action = self.get_best_possible_action(possibleMoves,Qout,s)
+            action = self.get_best_possible_action(possibleMoves,Qout)
         self.conta += 1
 
         if self.mode != "play" and self.train: #mode == "train" or mode == "load"
             #Get new state and reward from environment and update
-            sPrime,r,done = s.next(self.tile,action)
+            sPrime,r,done = board.next(self.tile,action)
             self.QN.addExperience(s,action,r,sPrime,done)
             #Train when mem if it's len is at least batch_size
-            if self.conta % self.QN.batch_size == 0:
+            if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:
                 trainBatch = self.QN.sample()
-                inputs = np.zeros((self.QN.batch_size,self.QN.getInputShape()))
-                targets = np.zeros((self.QN.batch_size,self.QN.getInputShape()))
+                inputs = np.zeros((self.QN.batch_size,board.getBoardSize()))
+                targets = np.zeros((self.QN.batch_size,board.getBoardSize()))
                 for i in range(self.QN.batch_size):
                     s_batch,a_batch,r_batch,sP_batch,d_batch = trainBatch[i]
-                    inputs[i] = s_batch.getBoardShape(self.QN.getInputShape(),self.tile)
-                    sPBoardShape = sP_batch.getBoardShape(self.QN.getInputShape(),self.tile)
-                    newShape = inputs[i].reshape((-1,self.QN.getInputShape()))
-                    targets[i] = self.model.predict(newShape) #Qout
-                    sPBoardShape = sPBoardShape.reshape((-1,self.QN.getInputShape()))
-                    maxQ1 = np.max(self.model.predict(sPBoardShape))
-                    targets[i,a_batch] = r_batch if d_batch else r_batch + self.y*maxQ1
+                    inputs[i] = s_batch
+                    targets[i] = self.model.predict(inputs[i].reshape((-1,board.getBoardSize()))) #Qout
                     if d_batch:
+                        targets[i,a_batch] = r_batch
                         self.updateEpsilon()
+                    else:
+                        maxQ1 = np.max(self.model.predict(sP_batch.reshape((-1,board.getBoardSize())))) #(1,Board.SIZE)
+                        targets[i,a_batch] = r_batch + self.y*maxQ1
                 loss = self.model.train_on_batch(inputs, targets)
                 summary = tf.Summary(value=[tf.Summary.Value(tag="loss",simple_value=loss),])
                 self.QN.tbWriter.add_summary(summary)
         return action
 
-    def get_best_possible_action(self,possible_moves,moves,s):
+    def get_best_possible_action(self,possible_moves,moves):
         """
         Get the best possible move from a list
         @param list(int) possible_moves

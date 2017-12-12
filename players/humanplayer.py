@@ -11,7 +11,6 @@ class HumanPlayer(Player):
         Get the player's move
         @param board board
         @param list(int) possibleMoves
-        @param in num_game
         @return int position
         """
         self.view.printBoard(board.getBoard())

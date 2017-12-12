@@ -1,5 +1,6 @@
 from humanplayer import HumanPlayer
 from randomplayer import RandomPlayer
+from maxtileplayer import MaxTilePlayer
 from qplayer import QPlayer
 
 class PlayerFactory(object):
@@ -21,11 +22,15 @@ class PlayerFactory(object):
             b = HumanPlayer(1,view)
         elif bType == RandomPlayer.getType():
             b = RandomPlayer(1)
+        elif bType == MaxTilePlayer.getType():
+            b = MaxTilePlayer(1)
 
         if wType == HumanPlayer.getType():
             w = HumanPlayer(-1,view)
         elif wType == RandomPlayer.getType():
             w = RandomPlayer(-1)
+        elif wType == MaxTilePlayer.getType():
+            w = MaxTilePlayer(-1)
 
         return b,w
 
@@ -37,6 +42,7 @@ class PlayerFactory(object):
         types = []
         types.append(HumanPlayer.getType())
         types.append(RandomPlayer.getType())
+        types.append(MaxTilePlayer.getType())
         types.append(QPlayer.getType())
         types.append("") #null argument
         return types

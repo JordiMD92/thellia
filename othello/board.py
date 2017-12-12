@@ -35,32 +35,17 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
-    def getBoardShape(self,num_positions,tile):
-        """ Returns actual state of board in 1 Dimension of #input positions
-        @param int num_positions
-        @param int tile
+    def getBoardState(self):
+        """ Returns actual state of board in 1 Dimension
         @return list(int) shapedBoard
         """
-        oneD = self.board.reshape((pow(Board.SIZE,2)))
-        if num_positions == pow(Board.SIZE,2):
-            # vector of 36 positions
-            return oneD
-        if num_positions == (pow(Board.SIZE,2)*2+1):
-            # Half for black pieces positions, other half for white positions, last position = tile
-            shapedBoard = numpy.zeros((pow(Board.SIZE,2)*2+1),int)
-            idx = 0
-            for pos in oneD[0]:
-                if pos == 0:
-                    shapedBoard[idx] = 0
-                    shapedBoard[idx+pow(Board.SIZE)] = 0
-                elif pos == self.BLACK:
-                    shapedBoard[idx] = 1
-                else:
-                    shapedBoard[idx+pow(Board.SIZE,2)] = 1
-                idx += 1
+        return self.board.reshape((pow(Board.SIZE,2)))  #(Board.SIZE,)
 
-            shapedBoard[(pow(Board.SIZE,2)*2)] = (1+tile)/2
-            return shapedBoard.reshape((-1,(pow(Board.SIZE,2)*2+1)))
+    def getBoardSize(self):
+        """ Returns size of the board
+        @return int boardSize
+        """
+        return pow(Board.SIZE,2)
 
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
@@ -76,7 +61,7 @@ class Board(object):
         Update board and return new board and reward
         @param int tile
         @param int action
-        @return Board,int,bool sPrime,reward,done
+        @return Board[],int,bool sPrime,reward,done
         """
         sP = deepcopy(self)
         sP.updateBoard(tile,action)
@@ -85,7 +70,7 @@ class Board(object):
             reward = -1
             if sP.getScore()[tile] > sP.getScore()[-tile]:
                 reward = 1
-        return sP,reward, sP.isEndGame()
+        return sP.getBoardState(),reward, sP.isEndGame()
 
     def updateBoard(self,tile,move):
         """
