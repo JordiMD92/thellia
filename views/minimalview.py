@@ -9,8 +9,8 @@ class MinimalView:
             row = ""
             for c in range(0,8,1):
                 value = "|   "
-                if board[c][r] == -1: value = "| X "
-                if board[c][r] == 1: value = "| O "
+                if board[c][r] == -1: value = "| W "
+                if board[c][r] == 1: value = "| B "
                 row = row+value
             print(str(r+1)+row+"|")
             print(" - - - - - - - - - - - - - - - - -")

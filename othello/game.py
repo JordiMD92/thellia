@@ -14,25 +14,19 @@ class Game:
         self.board = Board()
 
     def reset(self):
-        """ Reset environment """
+        """ Reset environment
+	@return Player,int,int actualTurnPlayer,passCount,idx
+	"""
         self.board = Board()
+	return self.b,0,0
 
     def gameStart(self, dbGame=[]):
         """ Game engine to play Othello, switch between players and do moves
         @param list(int) dbGame
         """
-        # Get black player, first to move
-        if self.b.getTile() == self.board.BLACK:
-            black = self.b
-            white = self.w
-        else:
-            black = self.w
-            white = self.b
-        actualTurnPlayer = black
         # Reset board
-        self.reset()
-        passCount = 0
-        idx = 0
+        actualTurnPlayer,passCount,idx = self.reset()
+
         while not self.board.isEndGame():
             if dbGame and idx < len(dbGame):
                 #If dbGame, check same tile turn
@@ -54,8 +48,18 @@ class Game:
             else:
                 #If there aren't moves, pass
                 passCount += 1
-            actualTurnPlayer = white if actualTurnPlayer is black else black
+            actualTurnPlayer = self.w if actualTurnPlayer is self.b else self.b
             self.board.passCount = passCount
+
+    def testTraining(self):
+        tempW = self.w
+        self.w = MaxTilePlayer(-1)
+        tempBMode = self.b.mode
+	self.b.mode = "play"
+	win,_ = self.play(1)
+        self.w = tempW
+        self.b.mode = tempBMode
+	return win
 
     def train(self, num_episodes, dbGames=[]):
         """ Train othello game, run games for especified num_episodes
@@ -66,6 +70,8 @@ class Game:
         """
         start = timeit.default_timer()
         wins = []
+	winsBatch = []
+	winB = winW = 0
 
         # Train #num_episodes
         for i in range(num_episodes):
@@ -73,37 +79,30 @@ class Game:
             if dbGames:
                 dbGame = dbGames[i]
             self.gameStart(dbGame)
+	    winsBatch += self.testTraining()
 
-            if i % 100 == 0 and i > 0 and i != num_episodes:
-                print "{"+str(i)+" - "+str(num_episodes)+"}"
-            # Save wins and show time
-            if i % 200 == 0 and i > 0 and i != num_episodes:
-                pause = timeit.default_timer()
-                print "Temps: " + str(pause-start)
-                print "-- Play batch 100 Random games --"
-                tempW = self.w
-                #self.w = RandomPlayer(-1)
-                self.w = MaxTilePlayer(-1)
-                tempBTrain = self.b.train
-                self.b.mode = "play"
-                winsBatch,_ = self.play(100)
-                self.w = tempW
-                self.b.train = tempBTrain
-                print "---------------------------------"
-                wins += winsBatch
+	    # Save wins and show time
+            if len(winsBatch) % 100 == 0 and i > 0:
+                print "{"+str(i+1)+" - "+str(num_episodes)+"}"
+		for win in winsBatch:
+		    winB += win[0]
+		    winW += win[1]
+		wins.append((winB/100,winW/100))
+		winsBatch = []
+		winB = winW = 0
+		print "Black: "+str(wins[-1][0])+"% - White: "+str(wins[-1][1])+"%"
+		if i % 1000 == 0:
+		    pause = timeit.default_timer()
+                    print "Temps: " + str(pause-start)
 
-        # Play random batch and return results
-        print "-- Play batch 100 Random games --"
-        tempW = self.w
-        self.w = RandomPlayer(-1)
-        self.b.mode = "play"
-        winsBatch,_ = self.play(100)
-        self.w = tempW
-        print "---------------------------------"
-        wins += winsBatch
         stop = timeit.default_timer()
         time = str(stop-start)
-        return wins,time
+	if wins:
+	    for win in wins:
+		winB += win[0]
+		winW += win[1]
+	    print "\nMitjana partides\nBlack: "+str(winB/len(wins))+"% - White: "+str(winW/len(wins))+"%"
+	return wins,time
 
     def play(self,num_episodes):
         """ Play othello game, run games for especified num_episodes
@@ -122,7 +121,6 @@ class Game:
             # Save wins and show time
             if i % 100 == 0 and i > 0 and i != num_episodes:
                 wins.append(((winB/i*100),(winW/i*100)))
-                print wins
             if i % 1000 == 0 and i > 0 and i != num_episodes:
                 print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
                 pause = timeit.default_timer()
@@ -136,7 +134,8 @@ class Game:
         wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
         stop = timeit.default_timer()
         time = str(stop-start)
-        print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
+	if num_episodes != 1:
+            print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
         return wins,time
 
     def loadGames(self, db_path, total_episodes):

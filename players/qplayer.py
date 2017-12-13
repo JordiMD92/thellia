@@ -15,8 +15,6 @@ class QPlayer(Player):
         self.e = 1
         if QN.isModelLoaded():
             self.e = 0.1
-        if mode == "play" or mode == "load" or not train:
-            self.e = -1
         self.y = 0.99
         self.conta = 0
         self.updateFreq = 8
@@ -36,15 +34,17 @@ class QPlayer(Player):
         s = s.reshape((-1,board.getBoardSize())) #(1,Board.SIZE)
         Qout = self.model.predict(s)
         #Choose move e-greedyly, random or from network
-        if np.random.rand(1) < self.e:
+        if np.random.rand(1) < self.e and self.mode == "train":
             action = random.choice(possibleMoves)
         else:
-            action = self.get_best_possible_action(possibleMoves,Qout)
+            action = self.get_best_possible_action(possibleMoves,Qout,board)
         self.conta += 1
 
         if self.mode != "play" and self.train: #mode == "train" or mode == "load"
             #Get new state and reward from environment and update
             sPrime,r,done = board.next(self.tile,action)
+	    if self.mode == "load":
+		r = 1
             self.QN.addExperience(s,action,r,sPrime,done)
             #Train when mem if it's len is at least batch_size
             if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:
@@ -66,13 +66,14 @@ class QPlayer(Player):
                 self.QN.tbWriter.add_summary(summary)
         return action
 
-    def get_best_possible_action(self,possible_moves,moves):
+    def get_best_possible_action(self,possible_moves,moves,board):
         """
         Get the best possible move from a list
         @param list(int) possible_moves
         @param list(int) moves
         @return int move
         """
+	"""
         #Sort network moves from high to low
         sorted_moves = [(val,i) for i,val in enumerate(moves[0])]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
@@ -80,19 +81,20 @@ class QPlayer(Player):
             if move[1] in possible_moves:
                 return move[1]
         return -1
-        #Get list with fit value of possible_moves
-        """
+	"""
+
+        #Get best fitted and qvalue position
         fitted_moves = []
+	max_fit_value = -99
+	max_q_value = -1
         for move in possible_moves:
-            fitted_moves.append([move,board.get_fit_value(move)])
-        all_moves = []
-        for pmove in fitted_moves:
-            all_moves.append([pmove[0],pmove[1],moves[0][pmove[0]]])
-        if self.mode != "play":
-            print moves
-            print all_moves
-        return possible_moves[0]
-        """
+            val = board.get_fit_value(move)
+	    qval = moves[0][move]
+	    if val >= max_fit_value and qval >= max_q_value:
+		max_fit_value = val
+		max_q_value = qval
+		fmove = move
+        return fmove
 
     @classmethod
     def getType(self):
