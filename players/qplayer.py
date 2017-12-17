@@ -87,6 +87,7 @@ class QPlayer(Player):
         fitted_moves = []
 	max_fit_value = -99
 	max_q_value = -1
+	fmove = possible_moves[0]
         for move in possible_moves:
             val = board.get_fit_value(move)
 	    qval = moves[0][move]
