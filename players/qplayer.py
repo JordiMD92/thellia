@@ -24,7 +24,7 @@ class QPlayer(Player):
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,board,possibleMoves):
+    def getMove(self,game,board,possibleMoves):
         """ Get the player's move
         @param board board
         @param list(int) possibleMoves
@@ -42,7 +42,7 @@ class QPlayer(Player):
 
         if self.mode != "play" and self.train: #mode == "train" or mode == "load"
             #Get new state and reward from environment and update
-            sPrime,r,done = board.next(self.tile,action)
+            sPrime,r,done = game.next(board,action,self.tile)
             if self.mode == "load":
                 r = 1
             self.QN.addExperience(s,action,r,sPrime,done)
@@ -73,16 +73,14 @@ class QPlayer(Player):
         @param list(int) moves
         @return int move
         """
-        """
         #Sort network moves from high to low
         sorted_moves = [(val,i) for i,val in enumerate(moves[0])]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
         for move in sorted_moves:
             if move[1] in possible_moves:
                 return move[1]
-        return -1
+        return possible_moves[0] #not possible
         """
-
         #Get best fitted and qvalue position
         fitted_moves = []
         max_fit_value = -99
@@ -97,6 +95,7 @@ class QPlayer(Player):
                 max_q_value = qval
                 fmove = move
         return fmove
+        """
 
     @classmethod
     def getType(self):

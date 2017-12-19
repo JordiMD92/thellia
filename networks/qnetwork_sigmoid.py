@@ -25,9 +25,3 @@ class QNetworkSigmoid(QNetwork):
         @return string type
         """
         return "sigmoid"
-
-    def getLR(self):
-        """ Returns learning rate
-        @return float lr
-        """
-        return self.lr

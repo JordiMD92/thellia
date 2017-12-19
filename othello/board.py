@@ -56,7 +56,7 @@ class Board(object):
             return True
         return False
 
-    def next(self,tile,action):
+    def next(self,action,tile):
         """
         Update board and return new board and reward
         @param int tile
@@ -70,7 +70,7 @@ class Board(object):
             reward = -1
             if sP.getScore()[tile] > sP.getScore()[-tile]:
                 reward = 1
-        return sP.getBoardState(),reward, sP.isEndGame()
+        return sP, reward, sP.isEndGame()
 
     def updateBoard(self,tile,move):
         """

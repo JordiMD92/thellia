@@ -38,12 +38,6 @@ class QNetworkRelu(QNetwork):
         """
         return "relu"
 
-    def getLR(self):
-        """ Returns learning rate
-        @return float lr
-        """
-        return self.lr
-
     def getDrop(self):
         """ Returns dropout
         @return float drop

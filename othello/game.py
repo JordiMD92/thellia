@@ -24,32 +24,51 @@ class Game:
 		""" Game engine to play Othello, switch between players and do moves
 		@param list(int) dbGame
 		"""
+		self.dbGame = dbGame
 		# Reset board
-		actualTurnPlayer,passCount,idx = self.reset()
+		actualTurnPlayer,passCount,self.idx = self.reset()
 
 		while not self.board.isEndGame():
-			if dbGame and idx < len(dbGame):
-				#If dbGame, check same tile turn
-				if dbGame[idx][0] == actualTurnPlayer.getTile():
-					passCount = 0
-					possibleMoves = [dbGame[idx][1]]
-					idx += 1
-				else:
-					passCount += 1
-					possibleMoves = []
-			else:
-				#If not dbGame, get all possible moves
-				possibleMoves = actualTurnPlayer.checkMoves(self.board)
+			#If dbGame, check same tile turn. If not dbGame, get all possible moves
+			possibleMoves = actualTurnPlayer.checkMoves(self.board, dbGame, self.idx)
 			if possibleMoves:
 				# If there is a move, get player move and update board
 				passCount = 0
-				move = actualTurnPlayer.getMove(self.board, possibleMoves)
+				self.idx += 1
+				move = actualTurnPlayer.getMove(self, self.board, possibleMoves)
 				self.board.updateBoard(actualTurnPlayer.getTile(), move)
 			else:
 				#If there aren't moves, pass
 				passCount += 1
 			actualTurnPlayer = self.w if actualTurnPlayer is self.b else self.b
 			self.board.passCount = passCount
+
+	def next(self,board,action,tile):
+		"""Get next possible state from actual state and action
+		@param Board board
+		@param int action
+		@param int tile
+		@return Board,int,bool nextState,r,done
+		"""
+		tempBoard,r,done = board.next(action,tile)
+		if not done:
+			opponent = self.b if self.b.getTile() != tile else self.w
+			possibleMoves = opponent.checkMoves(tempBoard,self.dbGame,self.idx)
+			if not possibleMoves:
+				opponent = self.b if self.b.getTile() == tile else self.w
+				possibleMoves = opponent.checkMoves(tempBoard,self.dbGame,self.idx)
+			if possibleMoves:
+				if opponent.getType() == "QP":
+					tempTrain = opponent.train
+					opponent.train = False
+					move = opponent.getMove(self,tempBoard,possibleMoves)
+					opponent.train = tempTrain
+					opponent.conta -= 1
+				else:
+					move = opponent.getMove(self,tempBoard,possibleMoves)
+				nextBoard,_,_ = tempBoard.next(move,opponent.getTile())
+				return nextBoard.getBoardState(),r,done
+		return tempBoard.getBoardState(),r,done
 
 	def testTraining(self):
 		""" Play one game against an opponent
@@ -94,15 +113,14 @@ class Game:
 				winsBatch = []
 				winB = winW = 0
 				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(wins[-1][0])+"% - White: "+str(wins[-1][1]) + "%"
-				if i % 1000 == 0:
-					print "Temps: " + str(timeit.default_timer()-start)
-
+			if i % 1000 == 0 and i > 0 and i != num_episodes:
+				print "Temps: "+str(timeit.default_timer()-start)
 		time = str(timeit.default_timer()-start)
-		if wins:
-			for win in wins:
+		if winsBatch:
+			for win in winsBatch:
 				winB += win[0]
 				winW += win[1]
-			print "\nMitjana partides\nBlack: "+str(winB/len(wins))+"% - White: "+str(winW/len(wins))+"%"
+			print "\nMitjana partides\nBlack: "+str(winB/len(winsBatch))+"% - White: "+str(winW/len(winsBatch))+"%"
 		return wins,time
 
 	def play(self,num_episodes):

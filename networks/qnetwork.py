@@ -35,6 +35,12 @@ class QNetwork:
     def isModelLoaded(self):
         return self.modelLoaded
 
+    def getLR(self):
+        """ Returns learning rate
+        @return float lr
+        """
+        return self.lr
+
     def addExperience(self,s,action,r,sPrime,done):
         """ Add experience to the memory
         @param Board s
