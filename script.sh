@@ -1,0 +1,11 @@
+#python main.py -m load -e 100000 -n relu -s 32 -r 0.0005 -d 0.2;
+#python main.py -m load -e 100000 -n relu -s 32 -r 0.0005 -d 0.6;
+#python main.py -m load -e 100000 -n relu -s 32 -r 0.005 -d 0.2;
+#python main.py -m load -e 100000 -n relu -s 32 -r 0.005 -d 0.6;
+#python main.py -m load -e 100000 -n reluSM -s 32 -r 0.005 -d 0.2;
+#python main.py -m load -e 100000 -n reluSM -s 32 -r 0.005 -d 0.6;
+#python main.py -m load -e 100000 -n sigmoid -s 32 -r 0.004;
+#python main.py -m load -e 100000 -n sigmoid -s 32 -r 0.005;
+#python main.py -m load -e 100000 -n sigmoid -s 32 -r 0.006;
+python main.py -m load -e 100000 -n sigmoid -s 32 -r 0.005;
+python main.py -m load -e 100000 -n relu -s 32 -r 0.005 -d 0.4;
