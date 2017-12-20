@@ -9,10 +9,10 @@ def_lr = 0.01
 def_drop = 0.4
 
 class QNetworkReluSM(QNetwork):
-    def __init__(self,batch_size,lr,drop):
+    def __init__(self,lr,drop):
         self.lr = def_lr if lr == 0 else lr
         self.drop =  def_drop if drop == 0 else drop
-        QNetwork.__init__(self,batch_size)
+        QNetwork.__init__(self)
         self.model.add(Dense(units=200,activation='relu',input_shape=(64,)))
         self.model.add(Dense(units=190,activation='relu'))
         self.model.add(Dense(units=180,activation='relu'))

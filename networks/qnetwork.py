@@ -3,12 +3,14 @@ import tensorflow as tf
 from collections import deque
 import random
 
+batch_size = 32
+
 class QNetwork:
-    def __init__(self,batch_size):
+    def __init__(self):
         self.modelLoaded = False
         self.model = Sequential()
+        self.memBuffer = deque(maxlen=50000)
         self.batch_size = batch_size
-        self.memBuffer = deque(maxlen=1) if batch_size == 1 else deque(maxlen=50000)
 
     def getModel(self):
         """ Return QN model
@@ -55,4 +57,4 @@ class QNetwork:
         """ Return batch of experiences
         @return list[batch_size][s,action,r,sPrime,done]
         """
-        return random.sample(self.memBuffer, self.batch_size)
+        return random.sample(self.memBuffer, batch_size)

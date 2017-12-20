@@ -6,19 +6,19 @@ from qnetwork_sigmoidSM import QNetworkSigmoidSM
 class QNetworkFactory(object):
 
     @classmethod
-    def create(self,qType,batch_size,lr,drop):
+    def create(self,qType,lr,drop):
         """ Create network instance
         @param String qType
         @return QNetwork QNetwork
         """
         if qType == QNetworkRelu.getType():
-            return QNetworkRelu(batch_size,lr,drop)
+            return QNetworkRelu(lr,drop)
         elif qType == QNetworkSigmoid.getType():
-            return QNetworkSigmoid(batch_size,lr)
+            return QNetworkSigmoid(lr)
         elif qType == QNetworkReluSM.getType():
-            return QNetworkReluSM(batch_size,lr,drop)
+            return QNetworkReluSM(lr,drop)
         elif qType == QNetworkSigmoidSM.getType():
-            return QNetworkSigmoidSM(batch_size,lr)
+            return QNetworkSigmoidSM(lr)
         else:
             return
 

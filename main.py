@@ -6,8 +6,6 @@ from players.player_factory import PlayerFactory
 from networks.qnetwork_factory import QNetworkFactory
 from othello.process_results import ProcessResults
 
-""" page 105-145, 229-313, 439-473 """
-
 model_path = "./models"
 db_path = "./DB/"
 view = MinimalView()
@@ -22,11 +20,11 @@ def getArgs(argv):
     @return Player w
     @return String load
     """
-    num_episodes = batch_size = lrate = drop = 0
+    num_episodes  = lrate = drop = 0
     mode = qn_arg = b_arg = w_arg = load = ""
     #Check arguments
     try:
-        opts,args = getopt.getopt(argv,'m:e:n:s:r:d:b:w:l',['mode=','episodes=','neural_network=','batch_size=','lrate=','dropout=','black=','white=','load='])
+        opts,args = getopt.getopt(argv,'m:e:n:r:d:b:w:l',['mode=','episodes=','neural_network=','lrate=','dropout=','black=','white=','load='])
     except getopt.GetoptError as err:
         usage("Bad arguments usage")
     for opt, arg in opts:
@@ -49,15 +47,6 @@ def getArgs(argv):
             if arg not in (QNetworkFactory.getTypes()):
                 usage(arg+" is not a compatible network")
             qn_arg = arg
-        #Check batch size
-        if opt in ("-s","--batch_size"):
-            try:
-                if int(arg) > 0:
-                    batch_size = int(arg)
-                else:
-                    raise Exception()
-            except Exception as e:
-                print "The number of batch size must be a positive integer"
         #Check learning rate
         if opt in ("-r","--lrate"):
             try:
@@ -90,15 +79,15 @@ def getArgs(argv):
         if opt in ("-l","--load"):
             load = arg
     #Those 3 arguments are needed
-    if mode == "" or num_episodes == 0 or qn_arg == "" or batch_size == 0:
-        usage("Mode, number of episodes, neural network and batch size are needed")
+    if mode == "" or num_episodes == 0 or qn_arg == "":
+        usage("Mode, number of episodes and neural network are needed")
     #If play or train, players are needed
     if mode in ("play","train") and b_arg == "" and w_arg == "":
         print "Players are needed to " + mode
         sys.exit(2)
 
     #Get QNetwork
-    QN = QNetworkFactory.create(qn_arg,batch_size,lrate,drop)
+    QN = QNetworkFactory.create(qn_arg,lrate,drop)
 
     #Get Players
     b,w = PlayerFactory.create(view,b_arg,w_arg,QN,mode,num_episodes)
@@ -122,12 +111,12 @@ def getArgs(argv):
             QN.loadModel(model_path+"/"+load)
             print "Model ["+load+"] loaded"
 
-    return mode,num_episodes,QN,b,w,batch_size,load
+    return mode,num_episodes,QN,b,w,load
 
 def usage(error):
     """ Print information and exit """
     print error
-    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -s <batch_size> -r <learning_rate> -d <dropout> -b <player1_type> -w <player2_type> -l <load_model>"
+    print "main.py -m <mode> -e <num_episodes> -n <neural_network> -r <learning_rate> -d <dropout> -b <player1_type> -w <player2_type> -l <load_model>"
     print "<mode>: [train/play/load] (train game, play game, or load from db)"
     print "<neural_network>: " + str(QNetworkFactory.getTypes())
     print "<player_type>: [QP/RP/HP] " + str(PlayerFactory.getTypes())
@@ -152,7 +141,7 @@ def createFolder(model_name,i):
             if exception.errno != errno.EEXIST:
                 raise
 
-def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
+def getModel_name(mode, num_episodes, QN, b, w, load_model):
     """ Get model name of the folders
     @param String mode
     @param int num_episodes
@@ -168,7 +157,7 @@ def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
         str_num_episodes = str(int(num_episodes/1000))+"k"
     else:
         str_num_episodes = str(num_episodes)
-    model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType() +"_w"+ w.getType() +"_s"+ str(s) +"_lr"+ str(QN.getLR())
+    model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType() +"_w"+ w.getType() +"_lr"+ str(QN.getLR())
     if QN.getType() == "relu" or QN.getType() == "reluSM":
         model_name += "_drop"+ str(QN.getDrop())
     if load_model:
@@ -177,21 +166,22 @@ def getModel_name(mode, num_episodes, QN, b, w, s, load_model):
     new_model_name = createFolder(model_name,0)
     return new_model_name
 
-def save_model(model_name,results,QN,time):
+def save_model(model_name,results,QN,time,mode):
     """ Save model and results
     @param String model_name
     @param list(int,int) results
     @param QNetwork QN
     @param float time
+    @param String mode
     """
-    pr.saveResults(results,time,model_path+"/"+model_name)
+    pr.saveResults(results,time,model_path+"/"+model_name,mode)
     QN.saveModel(model_path+"/"+model_name)
     print "Model saved as: "+model_name
 
 def main(argv):
     # Use view and initalize game and QNetwork
-    mode, num_episodes, QN, b, w, s, load_model = getArgs(argv)
-    model_name = getModel_name(mode,num_episodes, QN, b, w, s, load_model)
+    mode, num_episodes, QN, b, w, load_model = getArgs(argv)
+    model_name = getModel_name(mode,num_episodes, QN, b, w, load_model)
     QN.initTensorboard(model_path+'/'+model_name)
 
     game = Game(view,b,w)
@@ -203,7 +193,7 @@ def main(argv):
         results,time = game.play(num_episodes)
     print "Temps Final: " + time
 
-    save_model(model_name, results, QN, time)
+    save_model(model_name, results, QN, time, mode)
     print "Application finalized"
 
 if __name__ == "__main__":

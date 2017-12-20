@@ -71,17 +71,19 @@ class Game:
 		return tempBoard.getBoardState(),r,done
 
 	def testTraining(self):
-		""" Play one game against an opponent
-		@return list[float][float] win
+		""" Play one game against RandomPlayer and MaxTilePlayer
+		@return list[float][float],list[float][float] winMT,winR
 		"""
 		tempW = self.w
-		self.w = MaxTilePlayer(-1)
 		tempBMode = self.b.mode
+		self.w = MaxTilePlayer(-1)
 		self.b.mode = "play"
-		win,_ = self.play(1)
+		winMT,_ = self.play(1)
+		self.w = RandomPlayer(-1)
+		winR,_ = self.play(1)
 		self.w = tempW
 		self.b.mode = tempBMode
-		return win
+		return winMT+winR
 
 	def train(self, num_episodes, dbGames=[]):
 		""" Train othello game, run games for especified num_episodes
@@ -93,7 +95,7 @@ class Game:
 		start = timeit.default_timer()
 		wins = []
 		winsBatch = []
-		winB = winW = 0
+		winMTB = winMTW = winRB = winRW = 0
 
 		# Train #num_episodes
 		for i in range(num_episodes):
@@ -102,25 +104,32 @@ class Game:
 				dbGame = dbGames[i]
 
 			self.gameStart(dbGame)
-			winsBatch += self.testTraining()
+			winsBatch.append(self.testTraining())
 
 			# Save wins and show time
 			if len(winsBatch) % 100 == 0 and i > 0:
-				for win in winsBatch:
-					winB += win[0]
-					winW += win[1]
-				wins.append((winB/100,winW/100))
+				for winMT,winR in winsBatch:
+					winMTB += winMT[0]
+					winMTW += winMT[1]
+					winRB += winR[0]
+					winRW += winR[1]
+				winMT = (winMTB/100,winMTW/100)
+				winR = (winRB/100,winRW/100)
+				wins.append((winMT,winR))
 				winsBatch = []
-				winB = winW = 0
-				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(wins[-1][0])+"% - White: "+str(wins[-1][1]) + "%"
+				winMTB = winMTW = winRB = winRW = 0
+				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(winR[0])+"% - White: "+str(winR[1]) + "%"
 			if i % 1000 == 0 and i > 0 and i != num_episodes:
 				print "Temps: "+str(timeit.default_timer()-start)
 		time = str(timeit.default_timer()-start)
-		if winsBatch:
-			for win in winsBatch:
-				winB += win[0]
-				winW += win[1]
-			print "\nMitjana partides\nBlack: "+str(winB/len(winsBatch))+"% - White: "+str(winW/len(winsBatch))+"%"
+		if wins:
+			for winMT,winR in wins:
+				winMTB += winMT[0]
+				winMTW += winMT[1]
+				winRB += winR[0]
+				winRW += winR[1]
+			print "\nMitjana partides Random - Black: "+str(winRB/len(wins))+"% - White: "+str(winRW/len(wins))+"%"
+			print "Mitjana partides MaxTile - Black: "+str(winMTB/len(wins))+"% - White: "+str(winMTW/len(wins))+"%"
 		return wins,time
 
 	def play(self,num_episodes):
