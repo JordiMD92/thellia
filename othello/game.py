@@ -42,6 +42,7 @@ class Game:
 				passCount += 1
 			actualTurnPlayer = self.w if actualTurnPlayer is self.b else self.b
 			self.board.passCount = passCount
+		return self.board.getWinner()
 
 	def next(self,board,action,tile):
 		"""Get next possible state from actual state and action
@@ -113,12 +114,10 @@ class Game:
 					winMTW += winMT[1]
 					winRB += winR[0]
 					winRW += winR[1]
-				winMT = (winMTB/100,winMTW/100)
-				winR = (winRB/100,winRW/100)
-				wins.append((winMT,winR))
+				wins.append(((winMTB,winMTW),(winRB,winRW)))
+				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(winRB)+"% - White: "+str(winRW) + "%"
 				winsBatch = []
 				winMTB = winMTW = winRB = winRW = 0
-				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(winR[0])+"% - White: "+str(winR[1]) + "%"
 			if i % 1000 == 0 and i > 0 and i != num_episodes:
 				print "Temps: "+str(timeit.default_timer()-start)
 		time = str(timeit.default_timer()-start)
@@ -144,25 +143,26 @@ class Game:
 
 		# Play #num_episodes
 		for i in range(num_episodes):
-			self.gameStart()
+			winBlack,winWhite = self.gameStart()
+			winB += winBlack
+			winW += winWhite
 
 			# Save wins and show time
-			if i % 100 == 0 and i > 0 and i != num_episodes:
-				wins.append(((winB/i*100),(winW/i*100)))
-			if i % 1000 == 0 and i > 0 and i != num_episodes:
-				print "("+str(i)+") Black wins: " + str(winB/i * 100) + "% - White wins: " + str(winW/i * 100) + "%"
+			if (i+1) % 100 == 0 and i > 0 and i != num_episodes:
+				wins.append(((winB),(winW)))
+				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black wins: " + str(winB) + "% - White wins: " + str(winW) + "%"
+				winB = winW = 0
+			if (i+1) % 1000 == 0 and i > 0 and i != num_episodes:
 				print "Temps: " + str(timeit.default_timer()-start)
 
-			if self.b.getScore(self.board) > self.w.getScore(self.board):
-				winB += 1
-			elif self.b.getScore(self.board) < self.w.getScore(self.board):
-				winW += 1
-
-		# Save wins and show time
-		wins.append(((winB/num_episodes*100),(winW/num_episodes*100)))
 		time = str(timeit.default_timer()-start)
-		if num_episodes != 1:
-			print "Black wins: " + str(winB/num_episodes*100) + "% - White wins: " + str(winW/num_episodes*100) + "%"
+		if wins:
+			for win in wins:
+				winB += win[0]
+				winW += win[1]
+			print "\nMitjana partides - Black: "+str(winB/len(wins))+"% - White: "+str(winW/len(wins))+"%"
+		if num_episodes == 1:
+			wins.append(((winB),(winW)))
 		return wins,time
 
 	def loadGames(self, db_path, total_episodes):

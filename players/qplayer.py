@@ -43,8 +43,6 @@ class QPlayer(Player):
         if self.mode != "play" and self.train: #mode == "train" or mode == "load"
             #Get new state and reward from environment and update
             sPrime,r,done = game.next(board,action,self.tile)
-            if self.mode == "load":
-                r = 1
             self.QN.addExperience(s,action,r,sPrime,done)
             #Train when mem if it's len is at least batch_size
             if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:
@@ -80,22 +78,6 @@ class QPlayer(Player):
             if move[1] in possible_moves:
                 return move[1]
         return possible_moves[0] #not possible
-        """
-        #Get best fitted and qvalue position
-        fitted_moves = []
-        max_fit_value = -99
-        max_q_value = -1
-        fmove = possible_moves[0]
-
-        for move in possible_moves:
-            val = board.get_fit_value(move)
-            qval = moves[0][move]
-            if val >= max_fit_value and qval >= max_q_value:
-                max_fit_value = val
-                max_q_value = qval
-                fmove = move
-        return fmove
-        """
 
     @classmethod
     def getType(self):

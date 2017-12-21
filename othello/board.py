@@ -51,6 +51,13 @@ class Board(object):
         """ Returns true if valid position or false otherwise """
         return (c>=0) and (c<=Board.SIZE-1) and (r>=0) and (r<=Board.SIZE-1)
 
+    def getWinner(self):
+        if self.score[1] > self.score[-1]:
+            return 1,0
+        if self.score[1] < self.score[-1]:
+            return 0,1
+        return 0,0
+
     def isEndGame(self):
         if self.remaining_pieces == 0 or self.passCount == 2:
             return True

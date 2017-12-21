@@ -7,7 +7,6 @@ class ProcessResults():
         self.fn = "/results"
 
     def saveResults(self,results,time,model_path,mode):
-        print results
         with open(model_path+self.fn,'w') as f:
             f.write(mode+"\n")
             winsB = []

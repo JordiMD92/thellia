@@ -5,7 +5,7 @@ from tensorflow.python.keras.optimizers import SGD
 #64:200:150:64       Softmax
 LOSS = 'mse'
 
-def_lr = 0.05
+def_lr = 0.005
 
 class QNetworkSigmoidSM(QNetwork):
     def __init__(self,lr):

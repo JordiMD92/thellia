@@ -5,7 +5,7 @@ from tensorflow.python.keras.optimizers import SGD
 #64:200:190:180...:64 RELU
 LOSS = 'mse'
 
-def_lr = 0.01
+def_lr = 0.005
 def_drop = 0.4
 
 class QNetworkReluSM(QNetwork):
