@@ -11,9 +11,10 @@ class QNetworkSigmoid(QNetwork):
     def __init__(self,lr):
         self.lr = def_lr if lr == 0 else lr
         QNetwork.__init__(self)
-        self.model.add(Dense(units=200,activation='sigmoid',input_shape=(64,)))
-        self.model.add(Dense(units=150,activation='sigmoid'))
-        self.model.add(Dense(units=100,activation='sigmoid'))
+        self.model.add(Dense(units=128,activation='sigmoid',input_shape=(64,)))
+#        self.model.add(Dense(units=200,activation='sigmoid',input_shape=(64,)))
+#        self.model.add(Dense(units=150,activation='sigmoid'))
+#        self.model.add(Dense(units=100,activation='sigmoid'))
         self.model.add(Dense(units=64,activation='sigmoid'))
         sgd = SGD(lr)
         self.model.compile(loss=LOSS,optimizer=sgd)
