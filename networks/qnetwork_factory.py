@@ -19,6 +19,8 @@ class QNetworkFactory(object):
             return QNetworkReluSM(lr,drop)
         elif qType == QNetworkSigmoidSM.getType():
             return QNetworkSigmoidSM(lr)
+        elif qType == QNetworkTangent.getType():
+            return QNetworkTangent(lr)
         else:
             return
 
@@ -32,4 +34,5 @@ class QNetworkFactory(object):
         types.append(QNetworkSigmoid.getType())
         types.append(QNetworkReluSM.getType())
         types.append(QNetworkSigmoidSM.getType())
+        types.append(QNetworkTangent.getType())
         return types
