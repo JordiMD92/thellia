@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+from scipy.interpolate import interp1d
+import numpy as np
 
 class ProcessResults():
 
@@ -46,6 +48,8 @@ class ProcessResults():
             mode = lines[0]
             winsB = lines[1].split(":")
             winsW = lines[2].split(":")
+            winsB = map(float, winsB)
+            winsW = map(float, winsW)
             if mode == "play\n":
                 print lines[3]
             else:
@@ -54,15 +58,27 @@ class ProcessResults():
                 winsMTB = map(float, winsMTB)
                 winsMTW = map(float, winsMTW)
                 print lines[5]
-        winsB = map(float, winsB)
-        winsW = map(float, winsW)
-        print "Mitjana Random- Black: "+str((sum(winsB)/len(winsB)))+" % - White: "+str((sum(winsW)/len(winsW)))+" %"
+        print "Mitjana Random - Black: "+str((sum(winsB)/len(winsB)))+" % - White: "+str((sum(winsW)/len(winsW)))+" %"
         if mode != "play\n":
-            print "Mitjana MaxTile- Black: "+str((sum(winsMTB)/len(winsMTB)))+" % - White: "+str((sum(winsMTW)/len(winsMTW)))+" %"
+            print "Mitjana MaxTile - Black: "+str((sum(winsMTB)/len(winsMTB)))+" % - White: "+str((sum(winsMTW)/len(winsMTW)))+" %"
+
         plt.figure(1)
-        plt.plot([x for x in winsB],'r^',[y for y in winsW],'bs')
-        plt.axis([0, len(winsB)-1, 0, 100])
-        black = mlines.Line2D([], [], color='red', marker='^', markersize=15, label='Black Wins')
-        white = mlines.Line2D([], [], color='blue', marker='s', markersize=15, label='White Wins')
-        plt.legend(handles=[black,white])
+        x = np.arange(0,len(winsB)*100,100)
+        y = np.array(winsB)
+        #plt.plot(x,y)
+        x2 = np.linspace(x.min(),x.max(),100)
+        f = interp1d(x,y,kind='cubic')
+        y2 = f(x2)
+        plt.plot(x2,y2)
+        random = mlines.Line2D([], [], color='blue', label='Black Wins vs Random')
+        maxTile = mlines.Line2D([], [], color='orange', label='Black Wins vs MaxTile')
+        if mode != "play\n":
+            y = np.array(winsMTB)
+            #plt.plot(x,y)
+            f = interp1d(x,y,kind='cubic')
+            y2 = f(x2)
+            plt.plot(x2,y2)
+            plt.legend(handles=[random,maxTile])
+        else:
+            plt.legend(handles=[random])
         plt.show()

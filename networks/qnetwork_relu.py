@@ -1,6 +1,6 @@
 from qnetwork import QNetwork
 from tensorflow.python.keras.layers import Dense, Dropout
-from tensorflow.python.keras.optimizers import SGD
+from tensorflow.python.keras.optimizers import SGD,Adam
 
 #64:200:190:180...:64 RELU
 LOSS = 'mse'
@@ -40,8 +40,9 @@ class QNetworkRelu(QNetwork):
         self.model.add(Dropout(drop))
         self.model.add(Dense(units=64,activation='relu'))
         self.model.add(Dropout(drop))
-        sgd = SGD(lr)
-        self.model.compile(loss=LOSS,optimizer=sgd)
+        #optimizer = SGD(lr)
+        optimizer = Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+        self.model.compile(loss=LOSS,optimizer=optmizer)
         print "Model ["+self.getType()+"] generated"
 
     @classmethod
