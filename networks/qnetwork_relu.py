@@ -42,7 +42,7 @@ class QNetworkRelu(QNetwork):
         self.model.add(Dropout(drop))
         #optimizer = SGD(lr)
         optimizer = Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-        self.model.compile(loss=LOSS,optimizer=optmizer)
+        self.model.compile(loss=LOSS,optimizer=optimizer)
         print "Model ["+self.getType()+"] generated"
 
     @classmethod
