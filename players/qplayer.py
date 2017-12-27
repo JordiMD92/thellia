@@ -45,7 +45,7 @@ class QPlayer(Player):
             sPrime,r,done = game.next(board,action,self.tile)
             self.QN.addExperience(s,action,r,sPrime,done)
             #Train when mem if it's len is at least batch_size
-            if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:
+            if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:                
                 trainBatch = self.QN.sample()
                 inputs = np.zeros((self.QN.batch_size,board.getBoardSize()))
                 targets = np.zeros((self.QN.batch_size,board.getBoardSize()))
