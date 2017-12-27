@@ -3,6 +3,8 @@ from os import listdir
 from os.path import isfile, join
 from xml.etree import cElementTree as ET
 import struct
+from othello.board import Board
+from players.randomplayer import RandomPlayer
 
 # Parse games XML and WTHOR to single file
 def xmlParser():
@@ -42,5 +44,110 @@ def wtbParser():
                 idx += gameBlockLength
     saveFile.close()
 
-xmlParser()
-wtbParser()
+def transformToDic():
+    dbGames = []
+    with open("DB/db","r") as f:
+        #Open file and read all
+        lines = f.readlines()
+        lines = [ line.strip() for line in lines ]
+        for idx in range(len(lines)):
+            # Put on memory only the number of games to play and return
+            newLine = []
+            i = 1
+            for char in lines[idx]:
+                if i % 2 == 0 and i > 0:
+                    move = ord(preChar) - 97 + (int(char) - 1) * 8
+                    newLine.append(move)
+                else:
+                    preChar = char
+                i += 1
+            dbGames.append(newLine)
+
+    black = RandomPlayer(1)
+    white = RandomPlayer(-1)
+    splitGames = []
+    for dbGame in dbGames:
+        actualTurnPlayer = black
+        board = Board()
+        passCount = 0
+        idx = 0
+        splitGame = []
+        while board.getRemainingPieces() > 0 and passCount < 2:
+            possibleMoves = actualTurnPlayer.checkMoves(board)
+            if possibleMoves:
+                splitGame.append([])
+                passCount = 0
+                try:
+                    move = dbGame[60 - board.getRemainingPieces()]
+                except:
+                    break
+                board.updateBoard(actualTurnPlayer.getTile(), move)
+                splitGame[idx].append(actualTurnPlayer.getTile())
+                splitGame[idx].append(move)
+                idx += 1
+            else:
+                passCount += 1
+            actualTurnPlayer = white if actualTurnPlayer is black else black
+        splitGames.append(splitGame)
+
+    with open("DB/newDB","a") as fw:
+        for game in splitGames:
+            fw.write(str(game)+"\n")
+
+def generateMirrorHGame():
+    db_path = "DB/mirrorDDB"
+    dbGames = []
+    with open(db_path, 'r') as f:
+        #Open file and read all
+        lines = f.readlines()
+        lines = [ line.strip() for line in lines ]
+        num_episodes = len(lines)
+        for idx in range(num_episodes):
+            newLine = eval(lines[idx])
+            dbGames.append(newLine)
+
+    idx = 0
+    while idx < len(dbGames):
+        idy = 0
+        while idy < len(dbGames[idx]):
+            dbGames[idx][idy][1] = 63 - dbGames[idx][idy][1]
+            idy += 1
+        idx += 1
+
+    with open("DB/mirrorDHDB","a") as fw:
+        for game in dbGames:
+            fw.write(str(game)+"\n")
+
+
+def generateMirrorDGame():
+    db_path = "DB/originalDB"
+    dbGames = []
+    with open(db_path, 'r') as f:
+        #Open file and read all
+        lines = f.readlines()
+        lines = [ line.strip() for line in lines ]
+        num_episodes = len(lines)
+        for idx in range(num_episodes):
+            newLine = eval(lines[idx])
+            dbGames.append(newLine)
+
+    idx = 0
+    while idx < len(dbGames):
+        idy = 0
+        while idy < len(dbGames[idx]):
+            f = dbGames[idx][idy][1] / 8
+            c = dbGames[idx][idy][1] % 8
+            dbGames[idx][idy][1] = c * 8 + f
+            idy += 1
+        idx += 1
+
+
+    with open("DB/mirrorDDB","a") as fw:
+        for game in dbGames:
+            fw.write(str(game)+"\n")
+
+#xmlParser()
+#wtbParser()
+#transformToDic()
+#generateMirrorHGame()
+#generateMirrorDGame()

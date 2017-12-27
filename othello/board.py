@@ -1,17 +1,30 @@
 import numpy
+from copy import deepcopy
 
 class Board(object):
     BLACK = 1
     WHITE = -1
 
+    FITBOARD = [[99,-8,8,6,6,8,-8,99],
+                [-8,-24,-4,-3,-3,-4,-24,-8],
+                [8,-4,7,4,4,7,-4,8],
+                [6,-3,4,0,0,4,-3,6],
+                [6,-3,4,0,0,4,-3,6],
+                [8,-4,7,4,4,7,-4,8],
+                [-8,-24,-4,-3,-3,-4,-24,-8],
+                [99,-8,8,6,6,8,-8,99]]
+
+    SIZE = 8
+
     def __init__(self):
-        self.board = numpy.zeros((8,8), int)
+        self.board = numpy.zeros((Board.SIZE,Board.SIZE), int)
         self.board[3][3] = Board.WHITE
         self.board[4][4] = Board.WHITE
         self.board[3][4] = Board.BLACK
         self.board[4][3] = Board.BLACK
 
-        self.remaining_pieces = 8*8-4
+        self.remaining_pieces = Board.SIZE*Board.SIZE-4
+        self.passCount = 0
         self.score = {Board.BLACK: 2, Board.WHITE: 2}
 
     def getScore(self):
@@ -22,58 +35,49 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
-    def getBoardShape(self,num_positions,tile):
-        """ Returns actual state of board in 1 Dimension of #input positions
-        @param int num_positions
-        @param int tile
+    def getBoardState(self):
+        """ Returns actual state of board in 1 Dimension
         @return list(int) shapedBoard
         """
-        oneD = self.board.reshape((64))
-        if num_positions == 64:
-            # vector of 64 positions
-            return oneD
-        if num_positions == 129:
-            # Half for black pieces positions, other half for white positions, last position = tile
-            shapedBoard = numpy.zeros(129,int)
-            idx = 0
-            for pos in oneD:
-                if pos == 0:
-                    shapedBoard[idx] = 0
-                    shapedBoard[idx+64] = 0
-                elif pos == self.BLACK:
-                    shapedBoard[idx] = 1
-                else:
-                    shapedBoard[idx+64] = 1
-                idx += 1
+        return self.board.reshape((pow(Board.SIZE,2)))  #(Board.SIZE,)
 
-            shapedBoard[128] = (1+tile)/2
-            return shapedBoard
+    def getBoardSize(self):
+        """ Returns size of the board
+        @return int boardSize
+        """
+        return pow(Board.SIZE,2)
 
     def isOnBoard(self,c,r):
         """ Returns true if valid position or false otherwise """
-        return (c>=0) and (c<=7) and (r>=0) and (r<=7)
+        return (c>=0) and (c<=Board.SIZE-1) and (r>=0) and (r<=Board.SIZE-1)
 
-    def getRemainingPieces(self):
-        """ Returns remaining pieces """
-        return self.remaining_pieces
+    def getWinner(self):
+        if self.score[1] > self.score[-1]:
+            return 1,0
+        if self.score[1] < self.score[-1]:
+            return 0,1
+        return 0,0
 
-    def next(self,tile,action):
+    def isEndGame(self):
+        if self.remaining_pieces == 0 or self.passCount == 2:
+            return True
+        return False
+
+    def next(self,action,tile):
         """
         Update board and return new board and reward
         @param int tile
         @param int action
-        @return Board,int,bool sPrime,reward,d
+        @return Board[],int,bool sPrime,reward,done
         """
-        self.updateBoard(tile,action)
+        sP = deepcopy(self)
+        sP.updateBoard(tile,action)
         reward = 0
-        d = 0
-        if self.remaining_pieces == 0:
-            d = 1
+        if sP.isEndGame():
             reward = -1
-            if self.getScore()[tile] > self.getScore()[-tile]:
+            if sP.getScore()[tile] > sP.getScore()[-tile]:
                 reward = 1
-        return self,reward,d
-
+        return sP, reward, sP.isEndGame()
 
     def updateBoard(self,tile,move):
         """
@@ -83,9 +87,10 @@ class Board(object):
             -1 for WHITE
         @param int move
             0-63 vector position
+        @return bool can_move
         """
-        row = move // 8
-        col = move % 8
+        row = move // Board.SIZE
+        col = move % Board.SIZE
         moves = self.isValidMove(tile,col,row)
         if moves:
             self.board[col][row] = tile
@@ -104,10 +109,10 @@ class Board(object):
         @param int tile
             1 for BLACK
             -1 for WHITE
-        @param int row
-            0-7 row position
         @param int col
             0-7 column position
+        @param int row
+            0-7 row position
         @return int[][]
             void if invalid move
             list of tiles to flip if valid move
@@ -134,3 +139,8 @@ class Board(object):
                         c += dirCol
                         r += dirRow
         return flipTiles
+
+    def get_fit_value(self,move):
+        row = move // Board.SIZE
+        col = move % Board.SIZE
+        return Board.FITBOARD[row][col]

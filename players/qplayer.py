@@ -1,80 +1,85 @@
 from player import Player
 import numpy as np
 import random
-from othello.experience_replay import ExperienceBuffer
-from othello.experience_replay import updateTargetGraph
-from othello.experience_replay import updateTarget
-
+import tensorflow as tf
 
 class QPlayer(Player):
 
-    def __init__(self,tile,mainQN,targetQN,train,num_episodes,sess,trainables):
-        Player.__init__(self,tile)
-        self.mainQN = mainQN
+    def __init__(self,tile,QN,targetQN,mode,num_episodes,train):
+        Player.__init__(self,tile=tile)
+        self.QN = QN
         self.targetQN = targetQN
-        self.train = train
+        self.mode = mode
         self.num_episodes = num_episodes
-        self.sess = sess
-        self.myBuffer = ExperienceBuffer()
-        self.gameBuffer = ExperienceBuffer()
-
+        self.train = train
         self.e = 1
-        if not train or train == "load":
-            self.e = -1
+        if QN.isModelLoaded():
+            self.e = 0.1
         self.y = 0.99
-        self.pre_train_steps = num_episodes * 25
-        self.batch_size = 32 #Size of training batch
-        tau = 0.001 #Amount to update target network at each step.
-        self.targetOps = updateTargetGraph(trainables,tau)
+        self.conta = 0
+        self.updateFreq = 8
 
     def updateEpsilon(self):
-        """ Update e greedy and game buffer """
+        """ Update e greedy """
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
-        self.myBuffer.add(self.gameBuffer.buffer)
-        self.gameBuffer = ExperienceBuffer()
 
-    def getMove(self,s,possibleMoves,total_steps):
+    def getMove(self,game,board,possibleMoves):
         """ Get the player's move
-        @param board s
+        @param board board
         @param list(int) possibleMoves
-        @param int total_steps
         @return int action
         """
-        boardShape = s.getBoardShape(self.mainQN.getInputShape(),self.tile)
-        Qout = self.sess.run(self.mainQN.Qout,feed_dict={self.mainQN.inputLayer:[boardShape]})
+        s = board.getBoardState()
+        #s = s.reshape((-1,board.getBoardSize())) #(1,Board.SIZE)
+        Qout = self.sess.run(self.QN.Qout, feed_dict={self.QN.inputLayer:[s]})
         #Choose move e-greedyly, random or from network
-        if np.random.rand(1) < self.e or total_steps < self.pre_train_steps:
+        if np.random.rand(1) < self.e and self.mode == "train":
             action = random.choice(possibleMoves)
         else:
-            action = self.get_best_possible_action(possibleMoves,Qout)
-        if self.train:
+            action = self.get_best_possible_action(possibleMoves,Qout,board)
+        self.conta += 1
+
+        if self.mode != "play" and self.train: #mode == "train" or mode == "load"
             #Get new state and reward from environment and update
-            sPrime,r,d = s.next(self.tile,action)
-            sPrimeBoardShape = sPrime.getBoardShape(self.mainQN.getInputShape(),self.tile)
-            self.gameBuffer.add(np.reshape(np.array([boardShape,action,r,sPrimeBoardShape,d]),[1,5]))
-            if total_steps > self.pre_train_steps and total_steps % 5 == 0:
-                #We use Double-DQN training algorithm
-                trainBatch = self.myBuffer.sample(self.batch_size)
-                Q1 = self.sess.run(self.mainQN.predict,feed_dict={self.mainQN.inputLayer:np.vstack(trainBatch[:,3])})
+            sPrime,r,done = game.next(board,action,self.tile)
+            self.QN.addExperience(s,action,r,sPrime,done)
+            #Train when mem if it's len is at least batch_size
+            if self.conta % self.updateFreq == 0 and self.conta >= self.QN.batch_size:
+                trainBatch = self.QN.sample()
+                #s_batch,a_batch,r_batch,sP_batch,d_batch = trainBatch[i]
+                Q1 = self.sess.run(self.QN.predict,feed_dict={self.QN.inputLayer:np.vstack(trainBatch[:,3])})
                 Q2 = self.sess.run(self.targetQN.Qout,feed_dict={self.targetQN.inputLayer:np.vstack(trainBatch[:,3])})
                 end_multiplier = -(trainBatch[:,4] - 1)
-                doubleQ = Q2[range(self.batch_size),Q1]
-                targetQ = trainBatch[:,2] + (self.y*doubleQ * end_multiplier)
-                _ = self.sess.run(self.mainQN.updateModel,feed_dict={self.mainQN.inputLayer:np.vstack(trainBatch[:,0]),self.mainQN.nextQ:targetQ,self.mainQN.actions:trainBatch[:,1]})
-                updateTarget(self.targetOps,self.sess)
+                doubleQ = Q2[range(self.QN.batch_size),Q1]
+                targetQ = trainBatch[:,2] + (self.y*doubleQ*end_multiplier)
+                _,loss = self.sess.run([self.QN.updateModel,self.QN.loss],feed_dict={self.QN.inputLayer:np.vstack(trainBatch[:,0]),self.QN.nextQ:targetQ,self.QN.actions:trainBatch[:,1]})
+                self.QN.updateTarget(self.targetOps,self.sess)
+
+                summary = tf.Summary(value=[tf.Summary.Value(tag="loss",simple_value=loss),])
+                self.QN.tbWriter.add_summary(summary)
+            if done:
+                self.updateEpsilon()
         return action
 
-    def get_best_possible_action(self,possible_moves,moves):
+    def get_best_possible_action(self,possible_moves,moves,board):
         """
-        Get the bes possible move from a list
+        Get the best possible move from a list
         @param list(int) possible_moves
         @param list(int) moves
         @return int move
         """
+        #Sort network moves from high to low
         sorted_moves = [(val,i) for i,val in enumerate(moves[0])]
         sorted_moves.sort(key = lambda x: x[0], reverse = True)
         for move in sorted_moves:
             if move[1] in possible_moves:
                 return move[1]
-        return -1
+        return possible_moves[0] #not possible
+
+    @classmethod
+    def getType(self):
+        """ Returns players type
+        @return string type
+        """
+        return "QP"
