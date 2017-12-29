@@ -15,7 +15,8 @@ class QNetworkRelu(QNetwork):
         hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
         hidden = tf.layers.dense(hidden, 150, activation=tf.nn.relu)
         hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
-        self.Qout = tf.layers.dense(inputs=hidden, units=64)
+        dropLayer = tf.nn.dropout(hidden, drop)
+	self.Qout = tf.layers.dense(inputs=dropLayer, units=64)
         self.predict = tf.argmax(self.Qout, 1)
 
         self.actions = tf.placeholder(shape=[None], dtype=tf.int32)
