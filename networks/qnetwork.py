@@ -1,4 +1,3 @@
-from tensorflow.python.keras.models import Sequential, load_model
 from collections import deque
 import numpy as np
 import random

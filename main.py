@@ -5,12 +5,10 @@ from othello.game import Game
 from views.minimalview import MinimalView
 from players.player_factory import PlayerFactory
 from networks.qnetwork_factory import QNetworkFactory
-from othello.process_results import ProcessResults
 
 model_path = "./models"
 db_path = "./DB/"
 view = MinimalView()
-pr = ProcessResults()
 tau = 0.001
 
 def getArgs(argv):
@@ -166,15 +164,13 @@ def getModel_name(mode, num_episodes, QN, b, w, load_model):
     new_model_name = createFolder(model_name,0)
     return new_model_name
 
-def save_model(model_name,results,time,mode,sess,trainables):
+def save_model(model_name,mode,sess,trainables):
     """ Save model and results
     @param String model_name
-    @param list(int,int) results
-    @param QNetwork QN
-    @param float time
     @param String mode
+    @param tf.Session sess
+    @param tf.Trainables trainables
     """
-    pr.saveResults(results,time,model_path+"/"+model_name,mode)
     if mode != "play":
         saver = tf.train.Saver(trainables)
         saver.save(sess,model_path+"/"+model_name+"/model.ckpt")
@@ -186,12 +182,11 @@ def main(argv):
     mode, num_episodes, QN, b, w, load_model = getArgs(argv)
     model_name = getModel_name(mode,num_episodes, QN, b, w, load_model)
 
-    tbWriter = tf.summary.FileWriter(model_path+'/'+model_name+'/Graph')
+    #tbWriter = tf.summary.FileWriter(model_path+'/'+model_name, sess.graph)
     init = tf.global_variables_initializer()
     trainables = tf.trainable_variables()
     targetOps = QN.updateTargetGraph(trainables,tau)
     with tf.Session() as sess:
-        #sess = tf.InteractiveSession()
         sess.run(init)
 
         if load_model:
@@ -199,21 +194,22 @@ def main(argv):
             saver.restore(sess,ckpt.model_checkpoint_path)
             QN.loadModel()
 
+        tbWriter = tf.summary.FileWriter(model_path+"/"+model_name, sess.graph)
         QN.initTensorboard(tbWriter)
         QN.updateTarget(targetOps,sess)
         b.setSession(sess,targetOps)
         w.setSession(sess,targetOps)
 
-        game = Game(view,b,w)
+        game = Game(view,b,w,tbWriter)
         if mode == "load":
-            results,time = game.loadGames(db_path, num_episodes)
+            time = game.loadGames(db_path, num_episodes)
         elif mode == "train":
-            results,time = game.train(num_episodes)
+            time = game.train(num_episodes)
         elif mode == "play":
-            results,time = game.play(num_episodes)
+            _,time = game.play(num_episodes)
         print "Temps Final: " + time
 
-        save_model(model_name, results, time, mode, sess, trainables)
+        save_model(model_name, mode, sess, trainables)
     print "Application finalized"
 
 if __name__ == "__main__":

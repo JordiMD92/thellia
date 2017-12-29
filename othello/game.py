@@ -1,17 +1,19 @@
 from __future__ import division
 import timeit
 import time
+import tensorflow as tf
 from othello.board import Board
 from players.randomplayer import RandomPlayer
 from players.maxtileplayer import MaxTilePlayer
 
 class Game:
 
-	def __init__(self, view, b, w):
+	def __init__(self, view, b, w, tbWriter):
 		self.view = view
 		self.b = b
 		self.w = w
 		self.board = Board()
+		self.tbWriter = tbWriter
 
 	def reset(self):
 		""" Reset environment
@@ -23,6 +25,7 @@ class Game:
 	def gameStart(self, dbGame=[]):
 		""" Game engine to play Othello, switch between players and do moves
 		@param list(int) dbGame
+		@return int winner
 		"""
 		self.dbGame = dbGame
 		# Reset board
@@ -73,7 +76,7 @@ class Game:
 
 	def testTraining(self):
 		""" Play one game against RandomPlayer and MaxTilePlayer
-		@return list[float][float],list[float][float] winMT,winR
+		@return list(list[float][float]) winMt+winR
 		"""
 		tempW = self.w
 		tempBMode = self.b.mode
@@ -90,7 +93,6 @@ class Game:
 		""" Train othello game, run games for especified num_episodes
 		@param int num_episodes
 		@param list(list(int)) dbGames
-		@return list(int,int) wins
 		@return float time
 		"""
 		start = timeit.default_timer()
@@ -114,6 +116,12 @@ class Game:
 					winMTW += winMT[1]
 					winRB += winR[0]
 					winRW += winR[1]
+
+				summary = tf.Summary(value=[tf.Summary.Value(tag="Wins MaxTile",simple_value=winMTB),])
+				self.tbWriter.add_summary(summary)
+				summary = tf.Summary(value=[tf.Summary.Value(tag="Wins Random",simple_value=winRB),])
+				self.tbWriter.add_summary(summary)
+
 				wins.append(((winMTB,winMTW),(winRB,winRW)))
 				print "{"+str(i+1)+" - "+str(num_episodes)+"} - Black: "+str(winRB)+"% - White: "+str(winRW) + "%"
 				winsBatch = []
@@ -129,13 +137,12 @@ class Game:
 				winRW += winR[1]
 			print "\nMitjana partides Random - Black: "+str(winRB/len(wins))+"% - White: "+str(winRW/len(wins))+"%"
 			print "Mitjana partides MaxTile - Black: "+str(winMTB/len(wins))+"% - White: "+str(winMTW/len(wins))+"%"
-		return wins,time
+		return time
 
 	def play(self,num_episodes):
 		""" Play othello game, run games for especified num_episodes
 		@param int num_episode
-		@return list(int,int) wins
-		@return float time
+		@return list(int,int),float wins,time
 		"""
 		start = timeit.default_timer()
 		winB = winW = 0
@@ -166,10 +173,9 @@ class Game:
 		return wins,time
 
 	def loadGames(self, db_path, total_episodes):
-		""" Load professional saved games
+		""" Load from all professional saved games
 		@param String db_path
 		@param int num_episodes
-		@return list(int,int) wins
 		@return float time
 		"""
 		num_episodes = total_episodes
@@ -180,9 +186,16 @@ class Game:
 			if games:
 				dbGames += games
 		train_episodes = total_episodes if num_episodes == -1 else total_episodes-num_episodes
-		return self.train(train_episodes,dbGames)
+		time = self.train(train_episodes,dbGames)
 
 	def loadGame(self,db_path,filename,total_episodes):
+		"""
+		Load professional saved games from a filename
+		@param String db_path
+		@param String filename
+		@param int total_episodes
+		@return list[games],int games,total_episodes
+		"""
 		if total_episodes > 0:
 			games = []
 			with open(db_path+filename, 'r') as f:

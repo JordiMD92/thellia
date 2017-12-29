@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from copy import deepcopy
 
 class Board(object):
@@ -17,7 +17,7 @@ class Board(object):
     SIZE = 8
 
     def __init__(self):
-        self.board = numpy.zeros((Board.SIZE,Board.SIZE), int)
+        self.board = np.zeros((Board.SIZE,Board.SIZE), int)
         self.board[3][3] = Board.WHITE
         self.board[4][4] = Board.WHITE
         self.board[3][4] = Board.BLACK

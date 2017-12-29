@@ -2,7 +2,7 @@ from qnetwork import QNetwork
 import tensorflow as tf
 
 #64:200:150:100:64       Tangent
-def_lr = 0.00025
+def_lr = 0.0001
 
 class QNetworkTangent(QNetwork):
     def __init__(self,lr):
