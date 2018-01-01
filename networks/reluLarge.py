@@ -15,34 +15,20 @@ class QNetworkReluLarge(QNetwork):
             self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer200') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('hidden180') as scope:
-            hidden = tf.layers.dense(dropLayer, 180, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer180') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 180, activation=tf.nn.relu)
         with tf.name_scope('hidden160') as scope:
-            hidden = tf.layers.dense(dropLayer, 160, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer160') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 160, activation=tf.nn.relu)
         with tf.name_scope('hidden140') as scope:
-            hidden = tf.layers.dense(dropLayer, 140, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer140') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 140, activation=tf.nn.relu)
         with tf.name_scope('hidden120') as scope:
-            hidden = tf.layers.dense(dropLayer, 120, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer120') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 120, activation=tf.nn.relu)
         with tf.name_scope('hidden100') as scope:
-            hidden = tf.layers.dense(dropLayer, 100, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer100') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
         with tf.name_scope('hidden80') as scope:
-            hidden = tf.layers.dense(dropLayer, 80, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer80') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
+            hidden = tf.layers.dense(hidden, 80, activation=tf.nn.relu)
         with tf.name_scope('Qout') as scope:
-            self.Qout = tf.layers.dense(inputs=dropLayer, units=64)
+            self.Qout = tf.layers.dense(inputs=hidden, units=64)
         with tf.name_scope('predict') as scope:
             self.predict = tf.argmax(self.Qout, 1)
 
