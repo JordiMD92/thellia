@@ -1,7 +1,7 @@
 from qnetwork import QNetwork
 import tensorflow as tf
 
-#64:200:150:100:64      RELU
+#64:200:180:160:140:120:100:80:64      RELU
 def_lr = 0.0001
 def_drop = 0.4
 
@@ -12,7 +12,7 @@ class QNetworkReluLarge(QNetwork):
         QNetwork.__init__(self)
 
         with tf.name_scope('inputLayer') as scope:
-            self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
+            self.inputLayer = tf.placeholder(shape=[None,129], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
         with tf.name_scope('hidden180') as scope:
@@ -27,8 +27,10 @@ class QNetworkReluLarge(QNetwork):
             hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
         with tf.name_scope('hidden80') as scope:
             hidden = tf.layers.dense(hidden, 80, activation=tf.nn.relu)
+        with tf.name_scope('dropLayer') as scope:
+            dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
-            self.Qout = tf.layers.dense(inputs=hidden, units=64)
+            self.Qout = tf.layers.dense(inputs=dropLayer, units=64)
         with tf.name_scope('predict') as scope:
             self.predict = tf.argmax(self.Qout, 1)
 

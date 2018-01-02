@@ -12,15 +12,17 @@ class QNetworkRelu(QNetwork):
         QNetwork.__init__(self)
 
         with tf.name_scope('inputLayer') as scope:
-            self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
+            self.inputLayer = tf.placeholder(shape=[None,129], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
         with tf.name_scope('hidden150') as scope:
             hidden = tf.layers.dense(hidden, 150, activation=tf.nn.relu)
         with tf.name_scope('hidden100') as scope:
             hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
+        with tf.name_scope('dropLayer') as scope:
+            dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
-            self.Qout = tf.layers.dense(inputs=hidden, units=64)
+            self.Qout = tf.layers.dense(inputs=dropLayer, units=64)
         with tf.name_scope('predict') as scope:
             self.predict = tf.argmax(self.Qout, 1)
 

@@ -38,7 +38,7 @@ class Game:
 				# If there is a move, get player move and update board
 				passCount = 0
 				self.idx += 1
-				move = actualTurnPlayer.getMove(self, self.board, possibleMoves)
+				move = actualTurnPlayer.getMove(self, self.board, possibleMoves, actualTurnPlayer.getTile())
 				self.board.updateBoard(actualTurnPlayer.getTile(), move)
 			else:
 				#If there aren't moves, pass
@@ -65,14 +65,14 @@ class Game:
 				if opponent.getType() == "QP":
 					tempTrain = opponent.train
 					opponent.train = False
-					move = opponent.getMove(self,tempBoard,possibleMoves)
+					move = opponent.getMove(self,tempBoard,possibleMoves,tile)
 					opponent.train = tempTrain
 					opponent.conta -= 1
 				else:
-					move = opponent.getMove(self,tempBoard,possibleMoves)
+					move = opponent.getMove(self,tempBoard,possibleMoves,tile)
 				nextBoard,_,_ = tempBoard.next(move,opponent.getTile())
-				return nextBoard.getBoardState(),r,done
-		return tempBoard.getBoardState(),r,done
+				return nextBoard.getBoardState(tile),r,done
+		return tempBoard.getBoardState(tile),r,done
 
 	def testTraining(self):
 		""" Play one game against RandomPlayer and MaxTilePlayer
@@ -186,7 +186,7 @@ class Game:
 			if games:
 				dbGames += games
 		train_episodes = total_episodes if num_episodes == -1 else total_episodes-num_episodes
-		time = self.train(train_episodes,dbGames)
+		return self.train(train_episodes,dbGames)
 
 	def loadGame(self,db_path,filename,total_episodes):
 		"""

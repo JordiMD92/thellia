@@ -156,7 +156,7 @@ def getModel_name(mode, num_episodes, QN, b, w, load_model):
     else:
         str_num_episodes = str(num_episodes)
     model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType() +"_w"+ w.getType() +"_lr"+ str(QN.getLR())
-    if QN.getType() == "relu" or QN.getType() == "reluSM":
+    if QN.getType() == "relu" or QN.getType() == "reluLarge":
         model_name += "_drop"+ str(QN.getDrop())
     if load_model:
         model_name += "_("+load_model+")"

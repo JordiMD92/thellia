@@ -35,11 +35,30 @@ class Board(object):
         """ Returns actual state of board """
         return self.board
 
-    def getBoardState(self):
+    def getBoardState(self,tile):
         """ Returns actual state of board in 1 Dimension
         @return list(int) shapedBoard
         """
-        return self.board.reshape((pow(Board.SIZE,2)))  #(Board.SIZE,)
+        output = 129
+        oneD = self.board.reshape((pow(Board.SIZE,2)))
+        if output == 64:
+            return oneD
+        return self.get129DBoard(oneD,tile)
+
+    def get129DBoard(self,oneD,tile):
+        """ Returns actual state of board in 1 Dimension of 129 positions,
+        half for black pieces positions, other half for white positions + tile"""
+        shapedBoard = np.zeros(129,int)
+        idx = 0
+        for pos in oneD:
+            if pos == self.BLACK:
+                shapedBoard[idx] = 1
+            elif pos == self.WHITE:
+                shapedBoard[idx+64] = 1
+            idx += 1
+
+        shapedBoard[128] = (1+tile)/2
+        return shapedBoard
 
     def getBoardSize(self):
         """ Returns size of the board

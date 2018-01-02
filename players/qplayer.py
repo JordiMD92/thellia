@@ -24,13 +24,13 @@ class QPlayer(Player):
         if self.e > 0.01:
             self.e -= (0.9/self.num_episodes)
 
-    def getMove(self,game,board,possibleMoves):
+    def getMove(self,game,board,possibleMoves,tile):
         """ Get the player's move
         @param board board
         @param list(int) possibleMoves
         @return int action
         """
-        s = board.getBoardState()
+        s = board.getBoardState(tile)
         #s = s.reshape((-1,board.getBoardSize())) #(1,Board.SIZE)
         Qout = self.sess.run(self.QN.Qout, feed_dict={self.QN.inputLayer:[s]})
         #Choose move e-greedyly, random or from network
