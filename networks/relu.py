@@ -51,7 +51,7 @@ class QNetworkRelu(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "relu"
+        return "relu129"
 
     def getDrop(self):
         """ Returns dropout

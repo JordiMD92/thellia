@@ -39,7 +39,7 @@ class Board(object):
         """ Returns actual state of board in 1 Dimension
         @return list(int) shapedBoard
         """
-        output = 129
+        output = 64
         oneD = self.board.reshape((pow(Board.SIZE,2)))
         if output == 64:
             return oneD

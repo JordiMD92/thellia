@@ -12,21 +12,35 @@ class QNetworkReluLarge(QNetwork):
         QNetwork.__init__(self)
 
         with tf.name_scope('inputLayer') as scope:
-            self.inputLayer = tf.placeholder(shape=[None,129], dtype=tf.float32)
+            self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
+        with tf.name_scope('hidden190') as scope:
+            hidden = tf.layers.dense(hidden, 190, activation=tf.nn.relu)
         with tf.name_scope('hidden180') as scope:
             hidden = tf.layers.dense(hidden, 180, activation=tf.nn.relu)
+        with tf.name_scope('hidden170') as scope:
+            hidden = tf.layers.dense(hidden, 170, activation=tf.nn.relu)
         with tf.name_scope('hidden160') as scope:
             hidden = tf.layers.dense(hidden, 160, activation=tf.nn.relu)
+        with tf.name_scope('hidden150') as scope:
+            hidden = tf.layers.dense(hidden, 150, activation=tf.nn.relu)
         with tf.name_scope('hidden140') as scope:
             hidden = tf.layers.dense(hidden, 140, activation=tf.nn.relu)
+        with tf.name_scope('hidden130') as scope:
+            hidden = tf.layers.dense(hidden, 130, activation=tf.nn.relu)
         with tf.name_scope('hidden120') as scope:
             hidden = tf.layers.dense(hidden, 120, activation=tf.nn.relu)
+        with tf.name_scope('hidden110') as scope:
+            hidden = tf.layers.dense(hidden, 110, activation=tf.nn.relu)
         with tf.name_scope('hidden100') as scope:
             hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
+        with tf.name_scope('hidden90') as scope:
+            hidden = tf.layers.dense(hidden, 90, activation=tf.nn.relu)
         with tf.name_scope('hidden80') as scope:
             hidden = tf.layers.dense(hidden, 80, activation=tf.nn.relu)
+        with tf.name_scope('hidden70') as scope:
+            hidden = tf.layers.dense(hidden, 70, activation=tf.nn.relu)
         with tf.name_scope('dropLayer') as scope:
             dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
@@ -59,7 +73,7 @@ class QNetworkReluLarge(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "reluLarge"
+        return "reluLargeXL"
 
     def getDrop(self):
         """ Returns dropout
