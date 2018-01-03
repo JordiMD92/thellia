@@ -15,36 +15,35 @@ class QNetworkReluLarge(QNetwork):
             self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
-        with tf.name_scope('hidden190') as scope:
-            hidden = tf.layers.dense(hidden, 190, activation=tf.nn.relu)
         with tf.name_scope('hidden180') as scope:
             hidden = tf.layers.dense(hidden, 180, activation=tf.nn.relu)
-        with tf.name_scope('hidden170') as scope:
-            hidden = tf.layers.dense(hidden, 170, activation=tf.nn.relu)
         with tf.name_scope('hidden160') as scope:
             hidden = tf.layers.dense(hidden, 160, activation=tf.nn.relu)
-        with tf.name_scope('hidden150') as scope:
-            hidden = tf.layers.dense(hidden, 150, activation=tf.nn.relu)
         with tf.name_scope('hidden140') as scope:
             hidden = tf.layers.dense(hidden, 140, activation=tf.nn.relu)
-        with tf.name_scope('hidden130') as scope:
-            hidden = tf.layers.dense(hidden, 130, activation=tf.nn.relu)
         with tf.name_scope('hidden120') as scope:
             hidden = tf.layers.dense(hidden, 120, activation=tf.nn.relu)
-        with tf.name_scope('hidden110') as scope:
-            hidden = tf.layers.dense(hidden, 110, activation=tf.nn.relu)
         with tf.name_scope('hidden100') as scope:
             hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
-        with tf.name_scope('hidden90') as scope:
-            hidden = tf.layers.dense(hidden, 90, activation=tf.nn.relu)
         with tf.name_scope('hidden80') as scope:
             hidden = tf.layers.dense(hidden, 80, activation=tf.nn.relu)
-        with tf.name_scope('hidden70') as scope:
-            hidden = tf.layers.dense(hidden, 70, activation=tf.nn.relu)
         with tf.name_scope('dropLayer') as scope:
             dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
-            self.Qout = tf.layers.dense(inputs=dropLayer, units=64)
+            lastLayer = tf.layers.dense(inputs=dropLayer, units=64)
+            #self.Qout = lastLayer
+
+        with tf.name_scope('dueling') as scope:
+            streamA, streamV = tf.split(lastLayer,2,1)
+            xavier_init = tf.contrib.layers.xavier_initializer()
+            AW = tf.Variable(xavier_init([64/2, 64]))
+            VW = tf.Variable(xavier_init([64/2, 1]))
+            advantage = tf.matmul(streamA, AW)
+            value = tf.matmul(streamV, VW)
+
+        with tf.name_scope('DuelingQout') as scope:
+            self.Qout = value + tf.subtract(advantage,tf.reduce_mean(advantage,axis=1,keep_dims=True))
+
         with tf.name_scope('predict') as scope:
             self.predict = tf.argmax(self.Qout, 1)
 
@@ -73,7 +72,7 @@ class QNetworkReluLarge(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "reluLargeXL"
+        return "reluLarge"
 
     def getDrop(self):
         """ Returns dropout
