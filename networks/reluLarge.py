@@ -72,7 +72,7 @@ class QNetworkReluLarge(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "reluLarge"
+        return "reluLargeDuel"
 
     def getDrop(self):
         """ Returns dropout
