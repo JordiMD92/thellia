@@ -6,7 +6,7 @@ class HumanPlayer(Player):
         Player.__init__(self,tile=tile)
         self.view = view
 
-    def getMove(self,game,board,possibleMoves,tile):
+    def getMove(self,game,board,possibleMoves):
         """
         Get the player's move
         @param board board

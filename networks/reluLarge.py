@@ -13,6 +13,7 @@ class QNetworkReluLarge(QNetwork):
 
         with tf.name_scope('inputLayer') as scope:
             self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
+            self.move_mask = tf.placeholder(shape=[None,64], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
         with tf.name_scope('hidden180') as scope:
@@ -42,7 +43,8 @@ class QNetworkReluLarge(QNetwork):
             value = tf.matmul(streamV, VW)
 
         with tf.name_scope('DuelingQout') as scope:
-            self.Qout = value + tf.subtract(advantage,tf.reduce_mean(advantage,axis=1,keep_dims=True))
+            Qall = value + tf.subtract(advantage,tf.reduce_mean(advantage,axis=1,keep_dims=True))
+            self.Qout = tf.multiply(tf.exp(Qall), self.move_mask)
 
         with tf.name_scope('predict') as scope:
             self.predict = tf.argmax(self.Qout, 1)

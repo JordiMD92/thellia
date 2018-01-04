@@ -34,21 +34,22 @@ class QNetwork:
         """
         return self.lr
 
-    def addExperience(self,s,action,r,sPrime,done):
+    def addExperience(self,s,action,r,sPrime,done,move_mask,move_maskPrime):
         """ Add experience to the memory
         @param Board s
         @param int action
         @param int r
         @param Board sPrime
         @param bool done
+        @param list[] move_mask
         """
-        self.memBuffer.append((s,action,r,sPrime,done))
+        self.memBuffer.append((s,action,r,sPrime,done,move_mask,move_maskPrime))
 
     def sample(self):
         """ Return batch of experiences
         @return array[batch_size][s,action,r,sPrime,done]
         """
-        return np.reshape(np.array(random.sample(self.memBuffer, batch_size)),[batch_size,5])
+        return np.reshape(np.array(random.sample(self.memBuffer, batch_size)),[batch_size,7])
 
     def updateTargetGraph(self,tfVars,tau):
         total_vars = len(tfVars)

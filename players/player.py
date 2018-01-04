@@ -19,6 +19,8 @@ class Player:
         """
         Check if the player can make a move
         @param Board board
+        @param lis[] dbGame
+        @param int idx
         @return list(c+r*board.SIZE)
             list of posible moves in 1 dimension format
         """

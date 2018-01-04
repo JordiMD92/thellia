@@ -1,6 +1,7 @@
 from __future__ import division
 import timeit
 import time
+import numpy as np
 import tensorflow as tf
 from othello.board import Board
 from players.randomplayer import RandomPlayer
@@ -38,7 +39,7 @@ class Game:
 				# If there is a move, get player move and update board
 				passCount = 0
 				self.idx += 1
-				move = actualTurnPlayer.getMove(self, self.board, possibleMoves, actualTurnPlayer.getTile())
+				move = actualTurnPlayer.getMove(self, self.board, possibleMoves)
 				self.board.updateBoard(actualTurnPlayer.getTile(), move)
 			else:
 				#If there aren't moves, pass
@@ -54,6 +55,8 @@ class Game:
 		@param int tile
 		@return Board,int,bool nextState,r,done
 		"""
+		possibleMoves = []
+		move_maskPrime = np.zeros((64), dtype='float32')
 		tempBoard,r,done = board.next(action,tile)
 		if not done:
 			opponent = self.b if self.b.getTile() != tile else self.w
@@ -65,14 +68,15 @@ class Game:
 				if opponent.getType() == "QP":
 					tempTrain = opponent.train
 					opponent.train = False
-					move = opponent.getMove(self,tempBoard,possibleMoves,tile)
+					move = opponent.getMove(self,tempBoard,possibleMoves)
 					opponent.train = tempTrain
 					opponent.conta -= 1
 				else:
-					move = opponent.getMove(self,tempBoard,possibleMoves,tile)
-				nextBoard,_,_ = tempBoard.next(move,opponent.getTile())
-				return nextBoard.getBoardState(tile),r,done
-		return tempBoard.getBoardState(tile),r,done
+					move = opponent.getMove(self,tempBoard,possibleMoves)
+				tempBoard,_,_ = tempBoard.next(move,opponent.getTile())
+			move_maskPrime[possibleMoves] = 1
+			tile = opponent.getTile()
+		return tempBoard.getBoardState(tile),r,done,move_maskPrime
 
 	def testTraining(self):
 		""" Play one game against RandomPlayer and MaxTilePlayer
