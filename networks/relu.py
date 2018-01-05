@@ -12,7 +12,7 @@ class QNetworkRelu(QNetwork):
         QNetwork.__init__(self)
 
         with tf.name_scope('inputLayer') as scope:
-            self.inputLayer = tf.placeholder(shape=[None,64], dtype=tf.float32)
+            self.inputLayer = tf.placeholder(shape=[None,129], dtype=tf.float32)
             self.move_mask = tf.placeholder(shape=[None,64], dtype=tf.float32)
         with tf.name_scope('hidden200') as scope:
             hidden = tf.layers.dense(self.inputLayer, 200, activation=tf.nn.relu)
@@ -24,7 +24,6 @@ class QNetworkRelu(QNetwork):
             dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
             lastLayer = tf.layers.dense(inputs=dropLayer, units=64)
-            #self.Qout = lastLayer
 
         with tf.name_scope('dueling') as scope:
             streamA, streamV = tf.split(lastLayer,2,1)
@@ -66,7 +65,7 @@ class QNetworkRelu(QNetwork):
         """ Returns Network type
         @return string type
         """
-        return "reluDuel"
+        return "reluDuel129"
 
     def getDrop(self):
         """ Returns dropout

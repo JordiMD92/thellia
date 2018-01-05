@@ -40,8 +40,8 @@ class Board(object):
         @return list(int) shapedBoard
         """
         oneD = self.board.reshape((pow(Board.SIZE,2)))
-        return oneD
-        #return self.get129DBoard(oneD,tile)
+        #return oneD
+        return self.get129DBoard(oneD,tile)
 
     def get129DBoard(self,oneD,tile):
         """ Returns actual state of board in 1 Dimension of 129 positions,
