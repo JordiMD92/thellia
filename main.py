@@ -78,6 +78,7 @@ def getArgs(argv):
         #Check load model argument
         if opt in ("-l","--load"):
             load = arg
+            
     #Those 3 arguments are needed
     if mode == "" or num_episodes == 0 or qn_arg == "":
         usage("Mode, number of episodes and neural network are needed")
@@ -156,7 +157,7 @@ def getModel_name(mode, num_episodes, QN, b, w, load_model):
     else:
         str_num_episodes = str(num_episodes)
     model_name = mode +"_"+ str_num_episodes +"_"+ QN.getType() +"_b"+ b.getType() +"_w"+ w.getType() +"_lr"+ str(QN.getLR())
-    if QN.getType() == "relu" or QN.getType() == "reluLarge":
+    if "relu" in QN.getType():
         model_name += "_drop"+ str(QN.getDrop())
     if load_model:
         model_name += "_("+load_model+")"
@@ -164,7 +165,7 @@ def getModel_name(mode, num_episodes, QN, b, w, load_model):
     new_model_name = createFolder(model_name,0)
     return new_model_name
 
-def save_model(model_name,mode,sess,trainables):
+def save_model(model_name,mode,sess,saver,trainables):
     """ Save model and results
     @param String model_name
     @param String mode
@@ -172,7 +173,6 @@ def save_model(model_name,mode,sess,trainables):
     @param tf.Trainables trainables
     """
     if mode != "play":
-        saver = tf.train.Saver(trainables)
         saver.save(sess,model_path+"/"+model_name+"/model.ckpt")
     print "Model saved as: "+model_name
 
@@ -186,6 +186,7 @@ def main(argv):
     init = tf.global_variables_initializer()
     trainables = tf.trainable_variables()
     targetOps = QN.updateTargetGraph(trainables,tau)
+    saver = tf.train.Saver(trainables)
     with tf.Session() as sess:
         sess.run(init)
 
@@ -209,7 +210,7 @@ def main(argv):
             _,time = game.play(num_episodes)
         print "Temps Final: " + time
 
-        save_model(model_name, mode, sess, trainables)
+        save_model(model_name, mode, sess, saver, trainables)
     print "Application finalized"
 
 if __name__ == "__main__":
