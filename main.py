@@ -78,7 +78,7 @@ def getArgs(argv):
         #Check load model argument
         if opt in ("-l","--load"):
             load = arg
-            
+
     #Those 3 arguments are needed
     if mode == "" or num_episodes == 0 or qn_arg == "":
         usage("Mode, number of episodes and neural network are needed")
@@ -92,7 +92,7 @@ def getArgs(argv):
     targetQN = QNetworkFactory.create(qn_arg,lrate,drop)
 
     #Get Players
-    b,w = PlayerFactory.create(view,b_arg,w_arg,QN,targetQN,mode,num_episodes)
+    b,w1,w2,w3 = PlayerFactory.create(view,b_arg,w_arg,QN,targetQN,mode,num_episodes)
 
     #Create model_path if doesn't exists
     try:
@@ -110,7 +110,7 @@ def getArgs(argv):
             print "You must type a valid folder from models"
             sys.exit(2)
 
-    return mode,num_episodes,QN,b,w,load
+    return mode,num_episodes,QN,b,w1,w2,w3,load
 
 def usage(error):
     """ Print information and exit """
@@ -179,8 +179,8 @@ def save_model(model_name,mode,sess,saver,trainables):
 def main(argv):
     tf.reset_default_graph()
     # Use view and initalize game and QNetwork
-    mode, num_episodes, QN, b, w, load_model = getArgs(argv)
-    model_name = getModel_name(mode,num_episodes, QN, b, w, load_model)
+    mode, num_episodes, QN, b, w1, w2, w3, load_model = getArgs(argv)
+    model_name = getModel_name(mode,num_episodes, QN, b, w1, load_model)
 
     #tbWriter = tf.summary.FileWriter(model_path+'/'+model_name, sess.graph)
     init = tf.global_variables_initializer()
@@ -199,9 +199,11 @@ def main(argv):
         QN.initTensorboard(tbWriter)
         QN.updateTarget(targetOps,sess)
         b.setSession(sess,targetOps)
-        w.setSession(sess,targetOps)
+        w1.setSession(sess,targetOps)
+        w2.setSession(sess,targetOps)
+        w3.setSession(sess,targetOps)
 
-        game = Game(view,b,w,tbWriter)
+        game = Game(view,b,w1,w2,w3,tbWriter)
         if mode == "load":
             time = game.loadGames(db_path, num_episodes)
         elif mode == "train":

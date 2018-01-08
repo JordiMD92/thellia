@@ -9,10 +9,12 @@ from players.maxtileplayer import MaxTilePlayer
 
 class Game:
 
-	def __init__(self, view, b, w, tbWriter):
+	def __init__(self, view, b, w1,w2,w3, tbWriter):
 		self.view = view
 		self.b = b
-		self.w = w
+		self.w = w1
+		self.w2 = w2
+		self.w3 = w3
 		self.board = Board()
 		self.tbWriter = tbWriter
 
@@ -106,6 +108,10 @@ class Game:
 
 		# Train #num_episodes
 		for i in range(num_episodes):
+			if i % 50000 == 0:
+				self.w = self.w2
+			elif i % 100000 == 0:
+				self.w = self.w3
 			dbGame = []
 			if dbGames:
 				dbGame = dbGames[i]
