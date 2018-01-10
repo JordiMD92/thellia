@@ -20,10 +20,8 @@ class QNetworkRelu(QNetwork):
             hidden = tf.layers.dense(hidden, 150, activation=tf.nn.relu)
         with tf.name_scope('hidden100') as scope:
             hidden = tf.layers.dense(hidden, 100, activation=tf.nn.relu)
-        with tf.name_scope('dropLayer') as scope:
-            dropLayer = tf.nn.dropout(hidden, self.drop)
         with tf.name_scope('Qout') as scope:
-            lastLayer = tf.layers.dense(inputs=dropLayer, units=64)
+            lastLayer = tf.layers.dense(inputs=hidden, units=64)
 
         with tf.name_scope('dueling') as scope:
             streamA, streamV = tf.split(lastLayer,2,1)

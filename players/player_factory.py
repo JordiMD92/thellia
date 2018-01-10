@@ -16,10 +16,8 @@ class PlayerFactory(object):
         @return Player Player
         """
         b = QPlayer(1,QN,targetQN,mode,num_episodes,train=True)
-        w1 = RandomPlayer(-1)
-        w2 = MaxTilePlayer(-1)
-        w3 = QPlayer(-1,QN,targetQN,mode,num_episodes,train=False)
-        """
+        w = QPlayer(-1,QN,targetQN,mode,num_episodes,train=False)
+
         if bType == HumanPlayer.getType():
             b = HumanPlayer(1,view)
         elif bType == RandomPlayer.getType():
@@ -33,8 +31,8 @@ class PlayerFactory(object):
             w = RandomPlayer(-1)
         elif wType == MaxTilePlayer.getType():
             w = MaxTilePlayer(-1)
-        """
-        return b,w1,w2,w3
+
+        return b,w
 
     @classmethod
     def getTypes(self):
